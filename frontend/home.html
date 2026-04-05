@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <div class="card">
+    <h2 id="greeting">Loading...</h2>
+    <p id="subtext"></p>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    fetch("/auth/whoami")
+    .then(res=>{
+        if(!res.ok) window.location.href = "/login";
+        return (res.json());
+    }).then(data=>{
+        // console.log(data)
+        document.getElementById("greeting").textContent = `Great! Nice to see you, ${data.name}!`;
+        document.getElementById("subtext").textContent  = `Logged in as ${data.uid}`;
+
+    })
+
+
+    async function logout() {
+      await fetch("/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    }
+
+  </script>
+</body>
+</html>

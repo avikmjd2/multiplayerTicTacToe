@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+  <div class="card">
+    <h2 id="form-title">Login</h2>
+
+    <div id="name-field" style="display:none">
+      <input type="text" id="name" placeholder="Full Name" />
+    </div>
+
+    <input type="text"     id="uid"      placeholder="UID" />
+    <input type="password" id="password" placeholder="Password" />
+
+    <button id="submit-btn" onclick="handleSubmit()">Login</button>
+
+    <p class="toggle">
+      Don't have an account?
+      <a href="#" onclick="toggleMode()">Register</a>
+    </p>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    let isRegisterMode = false;
+
+
+    fetch("/auth/whoami")
+      .then(res => { if (res.ok) window.location.href = "/home"; });
+
+    function toggleMode() {
+      isRegisterMode = !isRegisterMode;
+
+      document.getElementById("form-title").textContent  = isRegisterMode ? "Register" : "Login";
+      document.getElementById("submit-btn").textContent  = isRegisterMode ? "Register" : "Login";
+      document.getElementById("name-field").style.display = isRegisterMode ? "block" : "none";
+
+      document.querySelector(".toggle a").textContent    = isRegisterMode ? "Login" : "Register";
+      document.querySelector(".toggle").childNodes[0].textContent = isRegisterMode
+        ? "Already have an account? " : "Don't have an account? ";
+
+      showMessage("", "");
+    }
+
+    async function handleSubmit() {
+      const uid      = document.getElementById("uid").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const name     = document.getElementById("name").value.trim();
+
+      if (!uid || !password) return showMessage("Fill in all fields.", "error");
+      if (isRegisterMode && !name) return showMessage("Enter your name.", "error");
+
+      const url  = isRegisterMode ? "/auth/register" : "/auth/login";
+      const body = isRegisterMode ? { uid, name, password } : { uid, password };
+
+      const res  = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) return showMessage(data.detail, "error");
+
+      if (isRegisterMode) {
+        showMessage("Registered! You can now log in.", "success");
+        toggleMode();
+      } else {
+        window.location.href = "/home";
+      }
+    }
+
+    function showMessage(text, type) {
+      const el = document.getElementById("message");
+      el.textContent = text;
+      el.className   = type;
+    }
+  </script>
+
+</body>
+</html>

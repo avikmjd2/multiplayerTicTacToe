@@ -1,11 +1,13 @@
 import sqlite3
 from dotenv import load_dotenv
 import os
+from pymongo import MongoClient
 
 load_dotenv()
 
 
 DB_PATH = os.getenv("DB_PATH", "./arena.db")
+MONGO_URL = os.getenv("MONGO_URL")
 
 def get_db():
     try:
@@ -15,3 +17,15 @@ def get_db():
         return conn
     except:
         print(DB_PATH)
+        
+        
+def get_mongo_db():
+    client = MongoClient(MONGO_URL)
+    try:
+        client.admin.command('ping')
+        return(client)
+    except Exception as e:
+        print(e)
+        return None
+        
+        

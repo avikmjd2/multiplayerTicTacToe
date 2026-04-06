@@ -33,7 +33,7 @@ def login():
 
 @app.get("/register")
 def register():
-    return FileResponse("../frontend/login.html")
+    return FileResponse("../frontend/register.html")
 
 
 from auth_router import router as auth_router

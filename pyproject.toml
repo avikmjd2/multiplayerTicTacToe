@@ -17,7 +17,9 @@ dependencies = [
     "sqlalchemy",
     "python-multipart",
     "mysql-connector-python",
-    "itsdangerous"
+    "itsdangerous",
+    "pymongo",
+    "pymongo[srv]"
 
 ]
 

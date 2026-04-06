@@ -1,88 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Login</title>
-  <link rel="stylesheet" href="/static/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena :: Biometric Login</title>
+    <style>
+        /* Base Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Animated Tech Background */
+        .bg-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        /* Main Glassmorphism Card */
+        .login-card {
+            background: rgba(13, 25, 41, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 229, 255, 0.1);
+            text-align: center;
+            position: relative;
+        }
+
+        /* Cyberpunk Corner Decals */
+        .corner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid #00e5ff;
+        }
+        .top-left { top: -5px; left: -5px; border-right: none; border-bottom: none; }
+        .bottom-right { bottom: -5px; right: -5px; border-left: none; border-top: none; }
+
+        h2 {
+            font-size: 24px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #00e5ff;
+            margin-bottom: 5px;
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+        }
+
+        .subtitle {
+            color: #8492a6;
+            font-size: 12px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Camera Viewport Area */
+        .camera-box {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            background: #000;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 229, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 1);
+        }
+
+        /* The actual video feed */
+        #videoFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect for natural feel */
+        }
+
+        /* Scanning HUD Overlay */
+        .hud-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            border: 40px solid transparent;
+            box-sizing: border-box;
+        }
+
+        .scan-bar {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, transparent, #00e5ff, transparent);
+            box-shadow: 0 0 20px #00e5ff;
+            top: 0;
+            animation: scanLoop 3s ease-in-out infinite;
+        }
+
+        @keyframes scanLoop {
+            0% { top: 0%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        .target-box {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 70%;
+            border: 1px dashed rgba(0, 229, 255, 0.4);
+            border-radius: 50% 50% 40% 40%;
+        }
+
+        /* Control Buttons */
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        button {
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .primary-btn {
+            background: #00e5ff;
+            border: none;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .primary-btn:hover {
+            background: #00b8d4;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            border: 1px solid #00e5ff;
+            color: #00e5ff;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(0, 229, 255, 0.1);
+        }
+
+        /* Hidden Canvas for Capture Logic */
+        #captureCanvas {
+            display: none;
+        }
+
+        /* Status Indicator */
+        .status-bar {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #00e5ff;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2 id="form-title">Login</h2>
+    <div class="bg-overlay"></div>
 
-    <div id="name-field" style="display:none">
-      <input type="text" id="name" placeholder="Full Name" />
+    <div class="login-card">
+        <div class="corner top-left"></div>
+        <div class="corner bottom-right"></div>
+
+        <h2>Biometric Auth</h2>
+        <p class="subtitle">Phase 2 Verification Required</p>
+
+        <div class="camera-box">
+            <video id="videoFeed" autoplay playsinline></video>
+            
+            <div class="hud-overlay">
+                <div class="scan-bar"></div>
+                <div class="target-box"></div>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="primary-btn" id="captureBtn">Verify Identity</button>
+            <button class="secondary-btn" id="retryBtn">Retry Scan</button>
+        </div>
+
+        <div class="status-bar" id="statusMessage">
+            > SYSTEM_READY: AWAITING_INPUT
+        </div>
+
+        <canvas id="captureCanvas" width="640" height="480"></canvas>
     </div>
 
-    <input type="text"     id="uid"      placeholder="UID" />
-    <input type="password" id="password" placeholder="Password" />
 
-    <button id="submit-btn" onclick="handleSubmit()">Login</button>
-
-    <p class="toggle">
-      Don't have an account?
-      <a href="#" onclick="toggleMode()">Register</a>
-    </p>
-
-    <div id="message"></div>
-  </div>
-
-  <script>
-    let isRegisterMode = false;
-
-
-    fetch("/auth/whoami")
-      .then(res => { if (res.ok) window.location.href = "/home"; });
-
-    function toggleMode() {
-      isRegisterMode = !isRegisterMode;
-
-      document.getElementById("form-title").textContent  = isRegisterMode ? "Register" : "Login";
-      document.getElementById("submit-btn").textContent  = isRegisterMode ? "Register" : "Login";
-      document.getElementById("name-field").style.display = isRegisterMode ? "block" : "none";
-
-      document.querySelector(".toggle a").textContent    = isRegisterMode ? "Login" : "Register";
-      document.querySelector(".toggle").childNodes[0].textContent = isRegisterMode
-        ? "Already have an account? " : "Don't have an account? ";
-
-      showMessage("", "");
-    }
-
-    async function handleSubmit() {
-      const uid      = document.getElementById("uid").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const name     = document.getElementById("name").value.trim();
-
-      if (!uid || !password) return showMessage("Fill in all fields.", "error");
-      if (isRegisterMode && !name) return showMessage("Enter your name.", "error");
-
-      const url  = isRegisterMode ? "/auth/register" : "/auth/login";
-      const body = isRegisterMode ? { uid, name, password } : { uid, password };
-
-      const res  = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) return showMessage(data.detail, "error");
-
-      if (isRegisterMode) {
-        showMessage("Registered! You can now log in.", "success");
-        toggleMode();
-      } else {
-        window.location.href = "/home";
-      }
-    }
-
-    function showMessage(text, type) {
-      const el = document.getElementById("message");
-      el.textContent = text;
-      el.className   = type;
-    }
-  </script>
+    <script src="/static/js/login.js"></script>
 
 </body>
 </html>

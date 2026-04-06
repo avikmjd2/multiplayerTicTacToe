@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Registration</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #00ff00;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .ui-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+        video {
+            border: 1px solid #333;
+            transform: scaleX(-1);
+            background-color: #000;
+        }
+        input {
+            background-color: #000;
+            color: #00ff00;
+            border: 1px solid #333;
+            padding: 10px;
+            font-family: monospace;
+            outline: none;
+        }
+        input::placeholder {
+            color: #008800;
+        }
+        button {
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px;
+            font-family: monospace;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #00cc00;
+        }
+        #statusMessage {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui-container">
+        <video id="videoFeed" width="640" height="480" autoplay playsinline></video>
+        <input type="text" id="usernameInput" placeholder="> ENTER_USERNAME" autocomplete="off">
+        <input type="password" id="passwordInput" placeholder="> ENTER_PASSWORD">
+        <button id="registerBtn">EXECUTE REGISTRATION</button>
+    </div>
+    
+    <div id="statusMessage">> SYSTEM_BOOTING...</div>
+    <canvas id="captureCanvas" width="640" height="480" style="display: none;"></canvas>
+
+    <script src="/static/js/register.js"></script>
+</body>
+</html>

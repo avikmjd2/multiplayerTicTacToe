@@ -3,12 +3,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
 load_dotenv()
 
 app = FastAPI()
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_middleware(
     SessionMiddleware,
@@ -35,6 +44,13 @@ def login():
 def register():
     return FileResponse("../frontend/register.html")
 
+@app.get("/lobby")
+def lobby():
+    return FileResponse("../frontend/lobby.html")
+
 
 from auth_router import router as auth_router
 app.include_router(auth_router)
+
+from lobby_router import router as lobby_router
+app.include_router(lobby_router)

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena Lobby :: Standing By</title>
+    <style>
+        /* Base Setup */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        /* Lobby Container */
+        .lobby-card {
+            background: rgba(13, 25, 41, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 900px;
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Header Section */
+        .lobby-header {
+            padding: 30px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lobby-header h2 {
+            font-size: 24px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #00e5ff;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+        }
+
+        .status-badge {
+            background: rgba(0, 229, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 50px;
+            border: 1px solid #00e5ff;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #00e5ff;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Player Grid */
+        .player-grid {
+            flex-grow: 1;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        /* Combatant Card */
+        .player-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, border 0.3s ease;
+            position: relative;
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            border: 1px solid #00e5ff;
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #2c5364, #203a43);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            border: 2px solid rgba(0, 229, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #00e5ff;
+        }
+
+        .player-name {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .player-id {
+            display: block;
+            font-size: 10px;
+            color: #8492a6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Ready Status Indicator */
+        .ready-status {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #ff4b2b; /* Not ready */
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .ready-status.is-ready {
+            color: #00ff88; /* Ready */
+        }
+
+        /* Footer Controls */
+        .lobby-footer {
+            padding: 30px;
+            border-top: 1px solid rgba(0, 229, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-preview {
+            color: #8492a6;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .action-btn {
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .ready-btn {
+            background: #00e5ff;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .ready-btn:hover {
+            background: #00b8d4;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.5);
+        }
+
+
+        /* Action Button Container */
+        .action-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* The New Play Button */
+        .play-btn {
+            background: transparent;
+            color: #00ff88; /* Neon Green */
+            border: 2px solid #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+
+        .play-btn:hover:not(:disabled) {
+            background: #00ff88;
+            color: #000;
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+        }
+
+        /* Disabled State (When waiting for players) */
+        .play-btn:disabled {
+            border-color: #333;
+            color: #555;
+            box-shadow: none;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        /* Special border for the Lobby Host */
+        .host-card {
+            border-color: #ffd700; /* Gold */
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+        }
+
+        /* The Mini Play Button inside the card */
+        .play-btn-mini {
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            border-radius: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .play-btn-mini:hover:not(:disabled) {
+            background: #00ff88;
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+        }
+
+        .play-btn-mini:disabled {
+            border-color: #333;
+            color: #555;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        /* Scrollbar Styling */
+        .player-grid::-webkit-scrollbar { width: 6px; }
+        .player-grid::-webkit-scrollbar-track { background: transparent; }
+        .player-grid::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.2); border-radius: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="lobby-card">
+        <header class="lobby-header">
+            <div>
+                <h2>Arena Lobby</h2>
+                <p id="room-id" style="font-size: 10px; color: #8492a6;">CHANNEL: GLOBAL_LOBBY_01</p>
+            </div>
+            <div class="status-badge">
+                <span class="pulse-dot"></span>
+                <span id="occupancy-text">0/10 Combatants</span>
+            </div>
+        </header>
+
+        <main class="player-grid" id="player-container">
+            </main>
+
+        <footer class="lobby-footer">
+            <div class="chat-preview" id="lobby-msg">
+                System: Awaiting combatant readiness...
+            </div>
+            <button class="action-btn ready-btn" id="ready-toggle">
+                Initialize Ready
+            </button>
+        </footer>
+    </div>
+    <script src="/static/js/lobby.js"></script>
+
+</body>
+</html>

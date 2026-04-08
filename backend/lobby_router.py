@@ -104,12 +104,13 @@ class Lobby:
     async def fallBackById(self,uid1,uid2):
         socket1=None
         socket2 = None
+        # print(f"4. Looking for sockets for UID1: {uid1}, UID2: {uid2}")
         for sockets, data in self.active_connections.items():
-            if(self.active_connections[sockets]["uid"] == uid1):
+            if(uid1 and self.active_connections[sockets]["uid"] == uid1):
                 socket1 = sockets
-            if(self.active_connections[sockets]["uid"] == uid2):
+            if(uid2 and self.active_connections[sockets]["uid"] == uid2):
                 socket2 = sockets
-                
+        # print(f"5. Sockets found - Socket1: {bool(socket1)}, Socket2: {bool(socket2)}")   
         await self.fallBack(socket1,socket2)
         
     async def fallBack(self,mySocket:WebSocket, opp_socket:WebSocket):
@@ -202,7 +203,7 @@ async def create_room(my_uid,opp_uid):
     
     created = False
     
-    room_id = secrets.randbits(63)
+    room_id = secrets.randbits(50)
     db = get_db()
     cursor = db.cursor()
     
@@ -237,18 +238,26 @@ async def create_room(my_uid,opp_uid):
 
     
 
-async def deleteRoom(id:str):
+async def deleteRoom(id:int):
     db = get_db()
     cursor = db.cursor()
     try:
-        uid_1 = cursor.execute("SELECT player1_uid FROM room WHERE room_id = ?",(id,)).fetchone()
-        uid_2 = cursor.execute("SELECT player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()
-        if(not(uid_1 and uid_2)):
+        row = cursor.execute("SELECT player1_uid, player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()
+        # uid_2 = cursor.execute("SELECT player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()
+        # if(not(uid_1 and uid_2)):
+        #     return
+        # uid_1 = uid_1[0]
+        # uid_2 = uid_2[0]  
+        
+        # print(f"2. Database row found: {row}")
+         
+        if not row:
             return
-        uid_1 = uid_1[0]
-        uid_2 = uid_2[0]
-        cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(-1,uid_1))
-        cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(-1,uid_2))
+        uid_1,uid_2 = row
+        if(uid_1): 
+            cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(-1,uid_1))
+        if(uid_2):
+            cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(-1,uid_2))
         cursor.execute("DELETE FROM room WHERE room_id = ?",(id,))
         await lobby.fallBackById(uid_1,uid_2)
         db.commit()

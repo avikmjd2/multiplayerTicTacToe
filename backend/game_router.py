@@ -20,7 +20,7 @@ class GameRoom:
         self.players: Dict[str, WebSocket] = {}
         self.players_uids = {}
         self.current_turn = "X" # X or Y
-        self.status = "waiting" # waiting or playing or win_X/O
+        self.status = "waiting" # waiting or playing or win_X/O or draw
 
     async def connect(self, websocket: WebSocket, uid: str):
         await websocket.accept()
@@ -57,7 +57,7 @@ class GameRoom:
 
         # Whose uid is this ie X or Y
         curr_player = None
-        for player, player_uid in self.player_uids.items():
+        for player, player_uid in self.players_uids.items():
             if player_uid == uid:
                 curr_player = player
         
@@ -83,6 +83,13 @@ class GameRoom:
             self.status = f"win_{curr_player}" 
         elif self.draw_checker(curr_player):
             self.status = "draw"
+
+                # Inside process_move, after the win/draw check block:
+        if self.status.startswith("win_") or self.status == "draw":
+            await self.broadcast_state()
+            await cleanup_room(self.room_id)
+            return
+
 
         # Switch turns if neither win nor draw case
         if self.current_turn == "X":
@@ -118,7 +125,19 @@ class GameRoom:
                 if self.board[r][c] == "":
                     return False
         
-        return True      
+        return True   
+
+async def cleanup_room(room_id):
+    # Person 3's deleteRoom handles:
+    # - Setting both players' room_id back to -1 in DB
+    # - Deleting the room row from the room table
+    # - Calling lobby.fallBackById() so players reappear in lobby
+    from lobby_router import deleteRoom
+    await deleteRoom(room_id)
+    
+    # Also remove from our in-memory dictionary
+    if room_id in active_games:
+        del active_games[room_id]   
 
 @router.websocket("/ws/game/{room_id}")
 async def game_endpoint(websocket: WebSocket, room_id: str):
@@ -152,6 +171,7 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
                 await room.process_move(uid, row, col)
 
     except WebSocketDisconnect:
+        pass
         # Will do Connection drop handling here 
         # await room.handle_disconnect(uid)
 

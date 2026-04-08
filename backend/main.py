@@ -40,6 +40,10 @@ def root():
 def login():
     return FileResponse("../frontend/login.html")
 
+@app.get("/game/{room_id}")
+def game_page(room_id: str):
+    return FileResponse("../frontend/game.html")
+
 @app.get("/register")
 def register():
     return FileResponse("../frontend/register.html")

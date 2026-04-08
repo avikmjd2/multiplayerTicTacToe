@@ -67,6 +67,7 @@ socket.onmessage = (event) =>{
         }
         else
         {
+            console.log(room);
             //traverse to room network;
         }
     }

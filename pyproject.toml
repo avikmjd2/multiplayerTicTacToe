@@ -19,7 +19,8 @@ dependencies = [
     "mysql-connector-python",
     "itsdangerous",
     "pymongo",
-    "pymongo[srv]"
+    "pymongo[srv]",
+    "asyncio"
 
 ]
 

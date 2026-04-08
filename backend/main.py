@@ -52,6 +52,9 @@ def lobby():
 from auth_router import router as auth_router
 app.include_router(auth_router)
 
+from game_router import router as game_router_instance
+app.include_router(game_router_instance)
+
 from lobby_router import router as lobby_router
 app.include_router(lobby_router)
 

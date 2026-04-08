@@ -18,8 +18,9 @@ class GameRoom:
 
         # {"X" : <Websocket of Player 1> ,..}
         self.players: Dict[str, WebSocket] = {}
+        self.players_uids = {}
         self.current_turn = "X" # X or Y
-        self.status = "waiting" # waiting or playing or finished
+        self.status = "waiting" # waiting or playing or win_X/O
 
     async def connect(self, websocket: WebSocket, uid: str):
         await websocket.accept()
@@ -27,11 +28,13 @@ class GameRoom:
         # First person to come is X
         if "X" not in self.players:
             self.players["X"] = websocket
+            self.players_uids["X"] = uid
             await websocket.send_json({"type":"init","symbol":"X"})
 
         # if X is here already (ie second person or more)
         elif "O" not in self.players:
             self.players["O"] = websocket
+            self.players_uids["O"] = uid
             self.status = "playing"
             await websocket.send_json({"type":"init","symbol":"O"})
 
@@ -49,6 +52,73 @@ class GameRoom:
         # self.players has X and O (both Players)
         for ws in self.players.values():
             await ws.send_json(payload)
+
+    async def process_move(self,uid:str,row:int,col:int):
+
+        # Whose uid is this ie X or Y
+        curr_player = None
+        for player, player_uid in self.player_uids.items():
+            if player_uid == uid:
+                curr_player = player
+        
+        # Validating current player
+        if curr_player is None: # neither X nor O (Spectator)
+            return
+        
+        if self.status != "playing": # Game not started or Over
+            return
+
+        if curr_player != self.current_turn: # Not curr_player's chance
+            return
+
+        # Validiating row and col
+        if self.board[row][col] != "": # Cell non empty
+            return
+
+        # Update the Board
+        self.board[row][col] = curr_player
+
+        # Checking for Win or Draw
+        if self.win_checker(curr_player):
+            self.status = f"win_{curr_player}" 
+        elif self.draw_checker(curr_player):
+            self.status = "draw"
+
+        # Switch turns if neither win nor draw case
+        if self.current_turn == "X":
+            self.current_turn = "O"
+        else:
+            self.current_turn = "X"
+
+        await self.broadcast_state()
+
+    def win_checker(self,curr_player):
+        # Checking all 3 rows
+        for r in range(3):
+            if self.board[r][0] == curr_player and self.board[r][1] == curr_player and self.board[r][2] == curr_player:
+                return True
+
+        # Checking all 3 cols
+        for c in range(3):
+            if self.board[0][c] == curr_player and self.board[1][c] == curr_player and self.board[2][c] == curr_player:
+                return True
+
+        # Checking Diagonals
+        if self.board[0][0] == curr_player and self.board[1][1] == curr_player and self.board[2][2] == curr_player:
+            return True
+            
+        if self.board[0][2] == curr_player and self.board[1][1] == curr_player and self.board[2][0] == curr_player:
+            return True
+  
+
+    def draw_checker(self,curr_player):
+        # if no box left means draw
+        for r in range(3):
+            for c in range(3):
+                if self.board[r][c] == "":
+                    return False
+        
+        return True      
 
 @router.websocket("/ws/game/{room_id}")
 async def game_endpoint(websocket: WebSocket, room_id: str):
@@ -79,7 +149,7 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
             if data.get("action") == "move" and room.status == "playing":
                 row = data.get("row")
                 col = data.get("col")
-                # await room.process_move(uid, row, col)
+                await room.process_move(uid, row, col)
 
     except WebSocketDisconnect:
         # Will do Connection drop handling here 

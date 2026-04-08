@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,9 +77,20 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.5);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* Player Grid */
@@ -141,13 +153,15 @@
         .ready-status {
             margin-top: 10px;
             font-size: 11px;
-            color: #ff4b2b; /* Not ready */
+            color: #ff4b2b;
+            /* Not ready */
             text-transform: uppercase;
             font-weight: bold;
         }
 
         .ready-status.is-ready {
-            color: #00ff88; /* Ready */
+            color: #00ff88;
+            /* Ready */
         }
 
         /* Footer Controls */
@@ -198,7 +212,8 @@
         /* The New Play Button */
         .play-btn {
             background: transparent;
-            color: #00ff88; /* Neon Green */
+            color: #00ff88;
+            /* Neon Green */
             border: 2px solid #00ff88;
             box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
         }
@@ -221,7 +236,8 @@
 
         /* Special border for the Lobby Host */
         .host-card {
-            border-color: #ffd700; /* Gold */
+            border-color: #ffd700;
+            /* Gold */
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
         }
 
@@ -255,12 +271,185 @@
         }
 
         /* Scrollbar Styling */
-        .player-grid::-webkit-scrollbar { width: 6px; }
-        .player-grid::-webkit-scrollbar-track { background: transparent; }
-        .player-grid::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.2); border-radius: 10px; }
+        .player-grid::-webkit-scrollbar {
+            width: 6px;
+        }
 
+        .player-grid::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .player-grid::-webkit-scrollbar-thumb {
+            background: rgba(0, 229, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        /* --- Challenge Prompt Overlay --- */
+        .challenge-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(9, 10, 15, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Modal Card */
+        .challenge-card {
+            background: rgba(13, 25, 41, 0.95);
+            border: 1px solid #ff4b2b;
+            /* Aggressive red border for a challenge */
+            box-shadow: 0 0 30px rgba(255, 75, 43, 0.2), inset 0 0 20px rgba(255, 75, 43, 0.05);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Header */
+        .challenge-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 75, 43, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .challenge-header h3 {
+            color: #ff4b2b;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(255, 75, 43, 0.4);
+        }
+
+        .pulse-dot-red {
+            width: 10px;
+            height: 10px;
+            background: #ff4b2b;
+            border-radius: 50%;
+            animation: pulseRed 1s infinite;
+        }
+
+        /* Content & Challenger Info */
+        .challenge-content {
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        .challenger-profile {
+            margin-bottom: 20px;
+        }
+
+        .challenger-avatar {
+            border-color: rgba(255, 75, 43, 0.5);
+            color: #ff4b2b;
+            width: 70px;
+            height: 70px;
+            font-size: 24px;
+        }
+
+        .challenge-text {
+            color: #8492a6;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* Actions */
+        .challenge-actions {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            gap: 15px;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+
+        .challenge-actions .action-btn {
+            flex: 1;
+            padding: 12px 0;
+            font-size: 14px;
+        }
+
+        /* Decline Button */
+        .decline-btn {
+            background: transparent;
+            color: #ff4b2b;
+            border: 1px solid #ff4b2b;
+        }
+
+        .decline-btn:hover {
+            background: rgba(255, 75, 43, 0.1);
+            box-shadow: 0 0 15px rgba(255, 75, 43, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Accept Button */
+        .accept-btn {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+        }
+
+        .accept-btn:hover {
+            background: #00ff88;
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8) translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulseRed {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.7);
+            }
+
+            70% {
+                transform: scale(1.2);
+                box-shadow: 0 0 0 10px rgba(255, 75, 43, 0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 75, 43, 0);
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <div class="lobby-card">
@@ -276,7 +465,7 @@
         </header>
 
         <main class="player-grid" id="player-container">
-            </main>
+        </main>
 
         <footer class="lobby-footer">
             <div class="chat-preview" id="lobby-msg">
@@ -287,7 +476,34 @@
             </button>
         </footer>
     </div>
+    <div class="challenge-overlay" id="challenge-prompt" data-uid="" style="display: none;">
+        <div class="challenge-card">
+            <div class="challenge-header">
+                <h3>Incoming Challenge</h3>
+                <div class="pulse-dot-red"></div>
+            </div>
+
+            <div class="challenge-content">
+                <div class="challenger-profile">
+                    <div class="avatar challenger-avatar">V</div>
+                    <span class="player-name">VoidWalker_99</span>
+                    <span class="player-id">ELO: 2450 | PING: 24ms</span>
+                </div>
+                <p class="challenge-text">Has challenged you to a 1v1 Arena Deathmatch.</p>
+            </div>
+
+            <div class="challenge-actions">
+                <button class="action-btn decline-btn">
+                    Decline
+                </button>
+                <button class="action-btn accept-btn">
+                    Accept
+                </button>
+            </div>
+        </div>
+    </div>
     <script src="/static/js/lobby.js"></script>
 
 </body>
+
 </html>

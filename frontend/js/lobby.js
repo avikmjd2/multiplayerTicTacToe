@@ -30,9 +30,13 @@ socket.onclose = (event) =>{
     }
 }
 
+const challengePrompt = document.getElementById('challenge-prompt');
+const acceptBtn = document.querySelector('.accept-btn');
+const declineBtn = document.querySelector('.decline-btn');
 
 socket.onmessage = (event) =>{
     const data = JSON.parse(event.data)
+    // console.log(data)
 
     if (data.type === "identity") 
     {
@@ -42,29 +46,116 @@ socket.onmessage = (event) =>{
     {
         updateLobbyUI(data);
     }
+    if(data.type==="ask")
+    {
+        ask(data);
+    }
+    if(data.type==="challenge")
+    {
+        const room = data.room_id;
+        if(room ==="error")
+        {
+            challengePrompt.style.display = 'none';
+            systemMsg.innerText = "Some error occured. Please try again after sometime.";
+            
+        }
+        else if(room==="decline" )
+        {
+            challengePrompt.style.display = 'none';
+            systemMsg.innerText = "CHALLENGE DECLINED";
+            
+        }
+        else
+        {
+            //traverse to room network;
+        }
+    }
+
 }
+
+
+function ask(data)
+{    
+    challengePrompt.style.display = 'flex';
+    challengePrompt.querySelector('.player-name').textContent = data.opp_name;
+    challengePrompt.querySelector('.challenger-avatar').textContent = data.opp_name.substr(0,1);
+    challengePrompt.dataset.uid = data.opp_uid;
+}
+
+
+acceptBtn.addEventListener('click', function(e) 
+{
+    e.preventDefault();
+    console.log("Challenge Accepted! Sending response to server...");
+    const payload = {
+        "action": "accept_challenge",
+        "opp_uid": challengePrompt.dataset.uid,
+        "accepted": "accepted"
+    }
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(payload));
+        systemMsg.innerText = "System: Readiness signal transmitted...";
+    } 
+    else 
+    {
+        systemMsg.innerText = "System: Cannot send, uplink offline.";
+    }
+    challengePrompt.style.display = 'none';
+    
+});
+
+declineBtn.addEventListener('click', function(e) 
+{
+    e.preventDefault()
+    console.log("Challenge Accepted! Sending response to server...");
+    const payload = {
+        "action": "accept_challenge",
+        "opp_uid": challengePrompt.dataset.uid,
+        "accepted": "declined"
+    }
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(payload));
+        systemMsg.innerText = "System: Readiness signal transmitted...";
+    } 
+    else 
+    {
+        systemMsg.innerText = "System: Cannot send, uplink offline.";
+    }
+    challengePrompt.style.display = 'none';
+});
+
+
 
 
 function updateLobbyUI(data)
 {
     occupancyText.innerText = `${data.count}/10 Combatants`;
     playerContainer.innerHTML = "";
+    // console.log(data);
     data.users.forEach((user,index) => {
         const initial = user.name.charAt(0).toUpperCase();
-        const readyClass = user.is_ready ? "is-ready" : "";
-        const readyText = user.is_ready ? "READY" : "STANDBY";
+        let readyClass = user.is_ready ? "is-ready" : "";
+        let readyText = user.is_ready ? "READY" : "STANDBY";
 
         const isHost = (myUid === user.uid);
         let hostControls = "";
         let disableTag="";
-        if (isHost) 
+
+
+        if (user.room_id !== null) 
+        {
+            readyText = "BUSY";
+            readyClass = "is-busy"; 
+            disableTag = "disabled";
+        }
+        else if (isHost || !user.is_ready) 
         {
             // const disableTag = allReady ? "" : "disabled";
              disableTag= "disabled";
             
         }
         hostControls = `
-            <button class="play-btn-mini" ${disableTag} id = "play-btn" data-uid="('${user.uid}')">
+            <button class="play-btn-mini" ${disableTag} data-uid="${user.uid}">
                 Engage Match
             </button>
         `;
@@ -81,7 +172,7 @@ function updateLobbyUI(data)
         playerContainer.insertAdjacentHTML('beforeend', cardHTML);
     });
 
-    systemMsg.innerText = "Ready.";
+    // systemMsg.innerText = "Ready."; //MAYBE TODO:ii
 
 }
 
@@ -127,5 +218,18 @@ playerContainer.addEventListener("click",(e)=>{
     const btn = e.target.closest(".play-btn-mini");
     if(!btn) return;
     const player_uid = btn.dataset.uid;
-    console.log(player_uid);
+    // console.log(player_uid);
+
+    const payload = {
+        "action": "challenge_player",
+        "opp_uid": player_uid
+    }
+    if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(payload));
+        systemMsg.innerText = "System: Readiness signal transmitted...";
+    } 
+    else 
+    {
+        systemMsg.innerText = "System: Cannot send, uplink offline.";
+    }
 })

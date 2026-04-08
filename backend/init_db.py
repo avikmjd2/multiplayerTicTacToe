@@ -15,8 +15,22 @@ cursor.execute("""
         name          TEXT,
         password_hash TEXT,
         elo_rating    INTEGER DEFAULT 1200,
-        is_online     INTEGER DEFAULT 0)
+        is_online     INTEGER DEFAULT 0,
+        room_id       INTEGER DEFAULT -1           
+        )
 """)
+
+cursor.execute("""
+        CREATE TABLE IF NOT EXISTS room (
+        room_id       INTEGER PRIMARY KEY,
+        player1_uid   TEXT,
+        player2_uid   TEXT,
+        board_id      TEXT      
+        )
+""")
+
+
+
 
 
 conn.commit()

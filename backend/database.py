@@ -12,7 +12,7 @@ MONGO_URL = os.getenv("MONGO_URL")
 def get_db():
     try:
         conn = sqlite3.connect(DB_PATH)
-        print(DB_PATH)
+        # print(DB_PATH)
         conn.row_factory = sqlite3.Row 
         return conn
     except:

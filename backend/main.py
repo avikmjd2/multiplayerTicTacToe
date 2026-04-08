@@ -54,3 +54,6 @@ app.include_router(auth_router)
 
 from lobby_router import router as lobby_router
 app.include_router(lobby_router)
+
+from game_logic import router as game_router
+app.include_router(game_router)

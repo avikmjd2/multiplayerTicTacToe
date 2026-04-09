@@ -3,4 +3,5 @@ __pycache__/
 .vscode
 logic.md
 .env
+uv.lock
 database.db

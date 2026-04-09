@@ -131,6 +131,37 @@ class GameRoom:
         
         return True   
 
+    async def handle_disconnect(self, uid: str):
+        player_disconnected = None
+        if self.players_uids["X"] == uid:
+            player_disconnected = "X"
+        elif self.players_uids["O"] == uid:
+            player_disconnected = "O"
+        else:
+            player_disconnected = "SPECTATOR"
+        
+        if player_disconnected == "X":
+            self.status = "forfiet_X"
+        elif player_disconnected == "O":
+            self.status = "forfiet_O"
+        
+        remaining_player = "O" if player_disconnected == "X" else "X"
+        try:
+            payload = {
+                "type": "update",
+                "board": self.board,
+                "turn": self.current_turn,
+                "status": self.status
+            }
+
+            await self.players[remaining_player].send_json(payload)
+        
+        except:
+            pass
+
+        await cleanup_room(self.room_id)
+        
+
 async def cleanup_room(room_id):
     # Person 3's deleteRoom handles:
     # - Setting both players' room_id back to -1 in DB
@@ -202,6 +233,6 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
     except WebSocketDisconnect:
         pass
         # Will do Connection drop handling here 
-        # await room.handle_disconnect(uid)
+        await room.handle_disconnect(uid)
 
 

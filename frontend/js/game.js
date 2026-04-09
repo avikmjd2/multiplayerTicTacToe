@@ -2,25 +2,25 @@
 const pathParts = window.location.pathname.split("/");
 const roomId = pathParts[pathParts.length - 1];
 
-// WebSocket connection
+// WebSocket connection (opening persistent connection)
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomId}`);
 
-// UI Elements
+// UI Elements (fetching all at once)
 const statusEl = document.getElementById("game-status");
 const symbolEl = document.getElementById("player-symbol");
 const cells = document.querySelectorAll(".cell");
 const actionsPanel = document.getElementById("actions-panel");
 
-let mySymbol = null;
+let mySymbol = null; // X or O or SPECTATOR
 let currentGameState = "waiting";
 
-// Handle Socket Open
+// Handle Socket Open (runs when connection established)
 socket.onopen = () => {
     statusEl.innerText = "WAITING FOR COMBATANT...";
     statusEl.className = "game-status status-waiting";
 };
 
-// Handle Socket Close/Disconnect
+// Handle Socket Close/Disconnect (runs when disconnect, shows error only when game not ended cause on end, disconnect expected)
 socket.onclose = () => {
     if (currentGameState !== "win" && currentGameState !== "lose" && currentGameState !== "draw") {
         statusEl.innerText = "SERVER CONNECTION LOST";

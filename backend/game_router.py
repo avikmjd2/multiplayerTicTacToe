@@ -90,6 +90,15 @@ class GameRoom:
 
         # Inside process_move, after the win/draw check block:
         if self.status.startswith("win_") or self.status == "draw":
+            elo_curr = await get_elo_player(self.players_uids[curr_player])
+            opp_player = "X" if curr_player == "O" else "O"
+            elo_opp = await get_elo_player(self.players_uids[opp_player])
+            actual_score = 1.0 if self.status.startswith("win_") else 0.5
+            new_elo_curr = calculate_elo(elo_curr,elo_opp,actual_score)
+            new_elo_opp = calculate_elo(elo_opp,elo_curr,1-actual_score)
+
+            update_elo(self.players_uids[curr_player],elo_curr,self.players_uids[opp_player])
+            
             await self.broadcast_state()
             await cleanup_room(self.room_id)
             return
@@ -181,6 +190,14 @@ async def cleanup_room(room_id):
     if room_id in active_games:
         del active_games[room_id]   
 
+async def get_elo_player(uid: str):
+    db = get_db()
+    cursor = db.cursor()
+    row = cursor.execute("SELECT elo_rating from users WHERE uid = ?",(uid,)).fetchone()
+
+    db.close()
+    return row[0] if row else 1200
+
 async def get_room_players(room_id: str):
     db = get_db()
     cursor = db.cursor()
@@ -188,6 +205,22 @@ async def get_room_players(room_id: str):
 
     db.close()
     return row
+
+async def update_elo(uid1: int, elo1: int, uid2: int, elo2: int):
+    db = get_db()
+    cursor = db.cursor()
+    query = "UPDATE users SET elo_rating = ? WHERE uid = ?"
+    cursor.execute(query, (elo1,uid1))
+    cursor.execute(query, (elo2,uid2))
+    
+    db.close()
+    return
+
+def calculate_elo(rating_player, rating_opponent, actual_score, k_factor=32):
+    # actual_score: 1.0 for Win, 0.5 for Draw, 0.0 for Loss
+    expected_score = 1 / (1 + 10 ** ((rating_opponent - rating_player) / 400))
+    new_rating = rating_player + k_factor * (actual_score - expected_score)
+    return round(new_rating)
 
 
 @router.websocket("/ws/game/{room_id}")

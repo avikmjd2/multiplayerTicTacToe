@@ -97,7 +97,7 @@ class GameRoom:
             new_elo_curr = calculate_elo(elo_curr,elo_opp,actual_score)
             new_elo_opp = calculate_elo(elo_opp,elo_curr,1-actual_score)
 
-            update_elo(self.players_uids[curr_player],new_elo_curr,self.players_uids[opp_player],new_elo_opp)
+            await update_elo(self.players_uids[curr_player],new_elo_curr,self.players_uids[opp_player],new_elo_opp)
             
             await self.broadcast_state()
             await cleanup_room(self.room_id)
@@ -221,6 +221,7 @@ async def update_elo(uid1: int, elo1: int, uid2: int, elo2: int):
     cursor.execute(query, (elo1,uid1))
     cursor.execute(query, (elo2,uid2))
     
+    db.commit()
     db.close()
     return
 

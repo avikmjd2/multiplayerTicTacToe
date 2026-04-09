@@ -7,7 +7,6 @@ import asyncio
 
 router = APIRouter()
 
-
 class RoomPayload(BaseModel):
     challenge_uid: str
     

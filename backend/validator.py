@@ -10,5 +10,3 @@ def validate(toCheckImg:str):
     nearestUID = find_closest_match(toCheckImg,allData)
     
     return(nearestUID)        
-    
-    

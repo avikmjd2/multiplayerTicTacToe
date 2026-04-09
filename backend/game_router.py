@@ -214,7 +214,6 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
         await websocket.close(code=1008)
         return
         
-
     # Connecting the User
     await room.connect(websocket, uid)
 

@@ -57,9 +57,10 @@ class Lobby:
             
     async def broadcast_presence(self):
         # user_list = list(self.active_connections.values())
+        func = lambda x: 10 if isinstance(x, (int, float)) else x
         user_list = [
                         {"uid": v["uid"], "name": v["name"], "is_ready": v["is_ready"], 
-                        "in_game": v["room_id"] is not None}
+                        "in_game": v["room_id"] is not None, "room_id" : func(v["room_id"])}
                         for v in self.active_connections.values()
                     ]
         payload = {

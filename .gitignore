@@ -5,3 +5,5 @@ logic.md
 .env
 uv.lock
 database.db
+database.dbuv.lock
+

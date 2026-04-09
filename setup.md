@@ -4,7 +4,7 @@ uv sync
 touch .env
 cd backend
 uv run init_db.py
-uvicorn main:app --reload 
+uvicorn main:app --reload
 ```
 
 ## ESSENTIAL .env VARIABLES:

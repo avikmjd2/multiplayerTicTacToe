@@ -141,9 +141,9 @@ class GameRoom:
             player_disconnected = "SPECTATOR"
         
         if player_disconnected == "X":
-            self.status = "forfiet_X"
+            self.status = "forfeit_X"
         elif player_disconnected == "O":
-            self.status = "forfiet_O"
+            self.status = "forfeit_O"
         
         remaining_player = "O" if player_disconnected == "X" else "X"
         try:

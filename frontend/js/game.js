@@ -22,7 +22,7 @@ socket.onopen = () => {
 
 // Handle Socket Close/Disconnect (runs when disconnect, shows error only when game not ended cause on end, disconnect expected)
 socket.onclose = () => {
-    if (currentGameState !== "win" && currentGameState !== "lose" && currentGameState !== "draw") {
+    if (!currentGameState.startsWith("win_") && !currentGameState.startsWith("forfeit_") && currentGameState !== "draw"){
         statusEl.innerText = "SERVER CONNECTION LOST";
         statusEl.className = "game-status status-lose";
         showReturnButton();
@@ -97,6 +97,18 @@ function updateStatus(turn, status) {
         statusEl.className = "game-status status-draw";
         showReturnButton();
     }
+    else if (status.startsWith("forfeit_")) {
+        const quitter = status.split("_")[1];
+        if (quitter === mySymbol) {
+            statusEl.innerText = "YOU DISCONNECTED";
+            statusEl.className = "game-status status-lose";
+        } else {
+            statusEl.innerText = "OPPONENT DISCONNECTED — YOU WIN";
+            statusEl.className = "game-status status-win";
+        }
+        showReturnButton();
+    }
+
 }
 
 // Click Listeners for sending moves

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import secrets
 from database import get_db
 import uuid
+import asyncio
 
 router = APIRouter()
 
@@ -19,6 +20,7 @@ class RoomSendPayload(BaseModel):
 class Lobby:
     def __init__(self):
         self.active_connections: dict[WebSocket, dict] ={}
+        self.uid_to_socket: dict[str, WebSocket] = {} #acts as a map 
         
     async def connect(self,websocket:WebSocket, uid:str, username:str):
         await websocket.accept()
@@ -39,35 +41,50 @@ class Lobby:
             "is_ready": False,
             "room_id": None
         }
+        self.uid_to_socket[uid] = websocket
         await websocket.send_json({"type": "identity", "my_uid": uid})
         await self.broadcast_presence()
         
-    async def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            del self.active_connections[websocket]
-            await self.broadcast_presence()
+    async def disconnect(self, websocket: WebSocket):        
+        data = self.active_connections.pop(websocket, None)
+        if data:
+            self.uid_to_socket.pop(data["uid"], None)
+            db = get_db()
+            db.execute("UPDATE users SET is_online = 0 WHERE uid = ?", (data["uid"],))
+            db.commit()
+            db.close()
+        
+        await self.broadcast_presence()
             
     async def broadcast_presence(self):
-        user_list = list(self.active_connections.values())
+        # user_list = list(self.active_connections.values())
+        user_list = [
+                        {"uid": v["uid"], "name": v["name"], "is_ready": v["is_ready"], 
+                        "in_game": v["room_id"] is not None}
+                        for v in self.active_connections.values()
+                    ]
         payload = {
             "type": "presence",
             "count": len(user_list),
             "users": user_list
         }
         
-        dead_sockets = []
         
-        for connection in self.active_connections.keys():
-            # if(self.active_connections[connection]["room_id"]==None or self.active_connections[connection]["room_id"]=="awaiting" ):
-            if(1):
-                try:
-                    await connection.send_json(payload)
-                except Exception:
-                    dead_sockets.append(connection)
+        connections = list(self.active_connections.keys())
+        
+        results = await asyncio.gather(
+            *[conn.send_json(payload) for conn in connections], return_exceptions=True
+        )
                     
-        for dead in dead_sockets:
-            if dead in self.active_connections:
-                del self.active_connections[dead]
+        
+        for conn, result in zip(connections, results):
+            if isinstance(result, Exception):
+                data =self.active_connections.pop(conn, None)
+                if data:
+                    self.uid_to_socket.pop(data["uid"], None)
+                
+                
+                
             
     async def toggle_ready(self, websocket: WebSocket):
         if websocket in self.active_connections:
@@ -76,11 +93,8 @@ class Lobby:
             await self.broadcast_presence()
             
     async def ask_challenge(self, mySocket,opp_uid, my_uid):
-        opp_socket = None
-        for websocket_paths in self.active_connections.keys():
-            if(self.active_connections[websocket_paths]["uid"] == opp_uid):
-                opp_socket = websocket_paths
-                break
+        
+        opp_socket = self.uid_to_socket.get(opp_uid)
         if(not opp_socket):
             await self.fallBack(mySocket,opp_socket)
             return
@@ -101,16 +115,22 @@ class Lobby:
         await opp_socket.send_json(ask_payload)
         await self.broadcast_presence()
         
+        asyncio.create_task(self._expire_challenge(mySocket, opp_socket, timeout=30))
+        
+        
+    async def _expire_challenge(self, socket1, socket2, timeout):
+        await asyncio.sleep(timeout)
+        s1_data = self.active_connections.get(socket1)
+        s2_data = self.active_connections.get(socket2)
+        if s1_data and s1_data["room_id"] == "awaiting":
+            await socket1.send_json({"type": "challenge", "room_id": "timeout"})
+            await self.fallBack(socket1, socket2)
+        
     async def fallBackById(self,uid1,uid2):
         socket1=None
-        socket2 = None
-        # print(f"4. Looking for sockets for UID1: {uid1}, UID2: {uid2}")
-        for sockets, data in self.active_connections.items():
-            if(uid1 and self.active_connections[sockets]["uid"] == uid1):
-                socket1 = sockets
-            if(uid2 and self.active_connections[sockets]["uid"] == uid2):
-                socket2 = sockets
-        # print(f"5. Sockets found - Socket1: {bool(socket1)}, Socket2: {bool(socket2)}")   
+        socket2 = None 
+        socket1 = self.uid_to_socket.get(uid1);
+        socket2 = self.uid_to_socket.get(uid2);
         await self.fallBack(socket1,socket2)
         
     async def fallBack(self,mySocket:WebSocket, opp_socket:WebSocket):
@@ -123,13 +143,11 @@ class Lobby:
     async def acceptChallenge(self, mySocket,opp_uid, my_uid, status):
         if(not mySocket): return
         
-        opp_socket = None
-        for websocket_paths in self.active_connections.keys():
-            if(self.active_connections[websocket_paths]["uid"] == opp_uid):
-                opp_socket = websocket_paths
-                break
-        # print(f"{status} {my_uid} {opp_socket} {mySocket} {opp_uid}")
-        if(not opp_socket or self.active_connections[opp_socket]["room_id"]!= "awaiting" or self.active_connections[mySocket]["room_id"]!= "awaiting"):
+        opp_socket = self.uid_to_socket.get(opp_uid)
+        if not opp_socket:
+            await self.fallBack(mySocket, None)
+            return
+        if(self.active_connections[opp_socket]["room_id"]!= "awaiting" or self.active_connections[mySocket]["room_id"]!= "awaiting"):
             await self.fallBack(mySocket,opp_socket)
             return
         
@@ -242,15 +260,7 @@ async def deleteRoom(id:int):
     db = get_db()
     cursor = db.cursor()
     try:
-        row = cursor.execute("SELECT player1_uid, player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()
-        # uid_2 = cursor.execute("SELECT player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()
-        # if(not(uid_1 and uid_2)):
-        #     return
-        # uid_1 = uid_1[0]
-        # uid_2 = uid_2[0]  
-        
-        # print(f"2. Database row found: {row}")
-         
+        row = cursor.execute("SELECT player1_uid, player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()         
         if not row:
             return
         uid_1,uid_2 = row

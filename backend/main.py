@@ -1,15 +1,21 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from manipulate_db.mannually_overwrite import overwrite as sqlite_overwrite
 import os
+from leaderboard_router import router as leaderboard_router
+
 
 load_dotenv()
 
+sqlite_overwrite()
+
 app = FastAPI()
 
+app.include_router(leaderboard_router)
 
 app.add_middleware(
     CORSMiddleware,

@@ -68,7 +68,9 @@ socket.onmessage = (event) =>{
         else
         {
             console.log(room);
-            //traverse to room network;
+            // This tells the browser to leave the lobby and go to the game page
+            window.location.href = `/game/${room}`;
+
         }
     }
 

@@ -133,12 +133,18 @@ class GameRoom:
 
     async def handle_disconnect(self, uid: str):
         player_disconnected = None
-        if self.players_uids["X"] == uid:
+        if self.players_uids.get("X") == uid:
             player_disconnected = "X"
-        elif self.players_uids["O"] == uid:
+        elif self.players_uids.get("O") == uid:
             player_disconnected = "O"
         else:
             player_disconnected = "SPECTATOR"
+            
+        if player_disconnected == "SPECTATOR":
+            return
+            
+        if self.status.startswith("win_") or self.status == "draw" or self.status.startswith("forfeit_"):
+            return
         
         if player_disconnected == "X":
             self.status = "forfeit_X"
@@ -154,7 +160,8 @@ class GameRoom:
                 "status": self.status
             }
 
-            await self.players[remaining_player].send_json(payload)
+            if remaining_player in self.players:
+                await self.players[remaining_player].send_json(payload)
         
         except:
             pass
@@ -231,8 +238,7 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
                 await room.process_move(uid, row, col)
 
     except WebSocketDisconnect:
-        pass
-        # Will do Connection drop handling here 
-        await room.handle_disconnect(uid)
+        if room_id in active_games:
+            await room.handle_disconnect(uid)
 
 

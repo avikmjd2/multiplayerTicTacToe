@@ -20,8 +20,9 @@ dependencies = [
     "itsdangerous",
     "pymongo",
     "pymongo[srv]",
-    "asyncio"
-
+    "asyncio",
+    "python-dotenv>=1.2.2",
+    "requests>=2.33.1",
 ]
 
 [tool.uv.sources]

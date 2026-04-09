@@ -97,7 +97,7 @@ class GameRoom:
             new_elo_curr = calculate_elo(elo_curr,elo_opp,actual_score)
             new_elo_opp = calculate_elo(elo_opp,elo_curr,1-actual_score)
 
-            update_elo(self.players_uids[curr_player],elo_curr,self.players_uids[opp_player])
+            update_elo(self.players_uids[curr_player],new_elo_curr,self.players_uids[opp_player],new_elo_opp)
             
             await self.broadcast_state()
             await cleanup_room(self.room_id)
@@ -141,26 +141,34 @@ class GameRoom:
         return True   
 
     async def handle_disconnect(self, uid: str):
-        player_disconnected = None
+        disconnected_player = None
         if self.players_uids.get("X") == uid:
-            player_disconnected = "X"
+            disconnected_player = "X"
         elif self.players_uids.get("O") == uid:
-            player_disconnected = "O"
+            disconnected_player = "O"
         else:
-            player_disconnected = "SPECTATOR"
+            disconnected_player = "SPECTATOR"
             
-        if player_disconnected == "SPECTATOR":
+        if disconnected_player == "SPECTATOR":
             return
             
         if self.status.startswith("win_") or self.status == "draw" or self.status.startswith("forfeit_"):
             return
         
-        if player_disconnected == "X":
+        if disconnected_player == "X":
             self.status = "forfeit_X"
-        elif player_disconnected == "O":
+        elif disconnected_player == "O":
             self.status = "forfeit_O"
         
-        remaining_player = "O" if player_disconnected == "X" else "X"
+        remaining_player = "O" if disconnected_player == "X" else "X"
+
+        elo_remaining = await get_elo_player(self.players_uids[remaining_player])
+        elo_disconnected = await get_elo_player(self.players_uids[disconnected_player])
+        new_elo_remaining = calculate_elo(elo_remaining,elo_disconnected,1)
+        new_elo_disconnected = calculate_elo(elo_disconnected,elo_remaining,0)
+
+        await update_elo(self.players_uids[remaining_player],new_elo_remaining,self.players_uids[disconnected_player],new_elo_disconnected)
+        
         try:
             payload = {
                 "type": "update",

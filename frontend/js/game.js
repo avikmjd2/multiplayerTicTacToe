@@ -5,7 +5,7 @@ const roomId = pathParts[pathParts.length - 1];
 // WebSocket connection (opening persistent connection)
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomId}`);
 
-// UI Elements (fetching all at once)
+// UI Elements (fetching useful Elements all at once)
 const statusEl = document.getElementById("game-status");
 const symbolEl = document.getElementById("player-symbol");
 const cells = document.querySelectorAll(".cell");

@@ -4,9 +4,12 @@ from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
+from manipulate_db.mannually_overwrite import overwrite as sqlite_overwrite
 import os
 
 load_dotenv()
+
+sqlite_overwrite()
 
 app = FastAPI()
 

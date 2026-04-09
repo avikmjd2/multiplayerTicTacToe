@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from database import get_db
 import base64
 
-load_dotenv
+load_dotenv()
 MONGO_URL = os.getenv("MONGO_URL");
 
 mongo_client = MongoClient(MONGO_URL)
@@ -15,8 +15,11 @@ image_list = arena_db["images"]
 
 def scrape():
 
-    db = get_db()   # this is basically sqlite 'connection' which avik wrote
-                    # and it gets data as dictionary instead of tuples
+    db = get_db()   
+    
+    # this is basically sqlite 'connection' which avik wrote
+    # and it gets data as dictionary instead of tuples
+    
     cursor = db.cursor()
 
     with open("batch_data.csv", newline="", encoding="utf-8") as f:

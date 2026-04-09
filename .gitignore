@@ -3,4 +3,4 @@ __pycache__/
 .vscode
 logic.md
 .env
-database.db
+database.dbuv.lock

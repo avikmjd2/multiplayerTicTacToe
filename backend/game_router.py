@@ -1,5 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import Dict 
+from typing import Dict
+from database import get_db 
 
 router = APIRouter()
 
@@ -19,6 +20,7 @@ class GameRoom:
         # {"X" : <Websocket of Player 1> ,..}
         self.players: Dict[str, WebSocket] = {}
         self.players_uids = {}
+        self.count_of_players = 0
         self.current_turn = "X" # X or Y
         self.status = "waiting" # waiting or playing or win_X/O or draw
 
@@ -26,17 +28,19 @@ class GameRoom:
         await websocket.accept()
 
         # First person to come is X
-        if "X" not in self.players:
-            self.players["X"] = websocket
-            self.players_uids["X"] = uid
+        if uid == self.players_uids["X"]:
+            self.count_of_players += 1
             await websocket.send_json({"type":"init","symbol":"X"})
 
         # if X is here already (ie second person or more)
-        elif "O" not in self.players:
-            self.players["O"] = websocket
-            self.players_uids["O"] = uid
-            self.status = "playing"
+        elif uid == self.players_uids["O"]:
+            self.count_of_players += 1
             await websocket.send_json({"type":"init","symbol":"O"})
+        else:
+            await websocket.send_json({"type":"init","symbol":"SPECTATOR"})
+
+        if self.count_of_players == 2:
+            self.status = "playing"
 
         await self.broadcast_state()
 
@@ -84,7 +88,7 @@ class GameRoom:
         elif self.draw_checker(curr_player):
             self.status = "draw"
 
-                # Inside process_move, after the win/draw check block:
+        # Inside process_move, after the win/draw check block:
         if self.status.startswith("win_") or self.status == "draw":
             await self.broadcast_state()
             await cleanup_room(self.room_id)
@@ -139,6 +143,15 @@ async def cleanup_room(room_id):
     if room_id in active_games:
         del active_games[room_id]   
 
+async def get_room_players(room_id: str):
+    db = get_db()
+    cursor = db.cursor()
+    row = cursor.execute("SELECT player1_uid, player2_uid from room WHERE room_id = ?",(room_id,)).fetchone()
+
+    db.close()
+    return row
+
+
 @router.websocket("/ws/game/{room_id}")
 async def game_endpoint(websocket: WebSocket, room_id: str):
     # First doing a security Check to Ensure user loggend in or not
@@ -151,9 +164,25 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
     # Checking if room exists, if DNE then create
 
     if room_id not in active_games:
+        r = await get_room_players(room_id)
+        if not r:
+            await websocket.close(code=1008)
+            return
         active_games[room_id] = GameRoom(room_id)
 
+        active_games[room_id].players_uids["X"] = r[0]
+        active_games[room_id].players_uids["O"] = r[1]
+    
     room = active_games[room_id]
+
+    if uid == room.players_uids.get("X"):
+        room.players["X"] = websocket
+    elif uid == room.players_uids.get("O"):
+        room.players["O"] = websocket 
+    else:
+        await websocket.close(code=1008)
+        return
+        
 
     # Connecting the User
     await room.connect(websocket, uid)

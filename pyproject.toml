@@ -11,7 +11,7 @@ dependencies = [
     "pillow>=12.1.1",
     "setuptools<71.0",
     "fastapi",
-    "uvicorn",
+    "uvicorn[standard]",
     "python-jose[cryptography]",
     "passlib[argon2]",
     "sqlalchemy",
@@ -23,6 +23,8 @@ dependencies = [
     "asyncio",
     "python-dotenv>=1.2.2",
     "requests>=2.33.1",
+    "dotenv>=0.9.9",
+
 ]
 
 [tool.uv.sources]

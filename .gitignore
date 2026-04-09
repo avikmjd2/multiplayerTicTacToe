@@ -7,3 +7,4 @@ uv.lock
 database.db
 database.dbuv.lock
 
+*.db

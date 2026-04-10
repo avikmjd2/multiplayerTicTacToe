@@ -1,347 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arena Lobby :: Standing By</title>
+    <title>Tic Tac Toe Lobby</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* Base Setup */
-        * {
+        :root {
+            --bg:           #0a0a0a;
+            --surface:      #141414;
+            --surface-2:    #1e1e1e;
+            --surface-3:    #2a2a2a;
+            --border:       rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --accent:       #eab308;
+            --accent-dim:   rgba(234, 179, 8, 0.1);
+            --success:      #22c55e;
+            --success-dim:  rgba(34, 197, 94, 0.1);
+            --danger:       #ef4444;
+            --danger-dim:   rgba(239, 68, 68, 0.1);
+            --text:         #f8fafc;
+            --text-2:       #94a3b8;
+            --text-3:       #64748b;
+            --ff-body:      'DM Sans', sans-serif;
+            --ff-mono:      'JetBrains Mono', monospace;
+            --r-sm:         8px;
+            --r-md:         12px;
+            --r-lg:         16px;
+            --r-xl:         24px;
+        }
+
+        *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
+            font-family: var(--ff-body);
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-position: center center;
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
-            color: #ffffff;
-            padding: 20px;
+            padding: 24px;
+            overflow: hidden;
         }
 
-        /* Lobby Container */
         .lobby-card {
-            background: rgba(13, 25, 41, 0.85);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 229, 255, 0.2);
-            border-radius: 20px;
             width: 100%;
-            max-width: 900px;
-            min-height: 600px;
+            max-width: 1000px;
+            min-height: 680px;
             display: flex;
             flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: cardRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        /* Header Section */
+        @keyframes cardRise {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
         .lobby-header {
-            padding: 30px;
-            border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+            padding: 30px 40px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
         }
 
-        .lobby-header h2 {
-            font-size: 24px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #00e5ff;
-            text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+        .header-title-area h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
         }
 
         .status-badge {
-            background: rgba(0, 229, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 50px;
-            border: 1px solid #00e5ff;
-            font-size: 12px;
-            font-weight: bold;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-2);
         }
 
         .pulse-dot {
-            width: 8px;
-            height: 8px;
-            background: #00e5ff;
+            width: 8px; height: 8px;
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
+            background: var(--success);
+            box-shadow: 0 0 12px var(--success);
+            animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.5);
-                opacity: 0.5;
-            }
-
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
         }
 
-        /* Player Grid */
+        .leaderboard-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: var(--r-md);
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .leaderboard-btn:hover {
+            background: rgba(234, 179, 8, 0.15);
+            border-color: rgba(234, 179, 8, 0.4);
+            transform: translateY(-2px);
+        }
+
         .player-grid {
-            flex-grow: 1;
-            padding: 30px;
+            flex: 1;
+            padding: 30px 40px;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 20px;
             overflow-y: auto;
+            align-content: start;
         }
 
-        /* Combatant Card */
+        .player-grid::-webkit-scrollbar { width: 6px; }
+        .player-grid::-webkit-scrollbar-track { background: transparent; }
+        .player-grid::-webkit-scrollbar-thumb {
+            background: var(--surface-3);
+            border-radius: 10px;
+        }
+
         .player-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 20px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 24px 16px;
             text-align: center;
-            transition: transform 0.3s ease, border 0.3s ease;
-            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .player-card:hover {
-            transform: translateY(-5px);
-            border: 1px solid #00e5ff;
-            background: rgba(0, 229, 255, 0.05);
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+            background: var(--surface-3);
+        }
+
+        .host-card {
+            border-color: rgba(234, 179, 8, 0.3);
+            background: linear-gradient(180deg, rgba(234, 179, 8, 0.05), var(--surface-2));
         }
 
         .avatar {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #2c5364, #203a43);
+            width: 56px; height: 56px;
+            background: var(--surface);
+            border: 2px solid var(--border);
             border-radius: 50%;
-            margin: 0 auto 15px;
-            border: 2px solid rgba(0, 229, 255, 0.3);
+            margin: 0 auto 16px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-weight: bold;
-            color: #00e5ff;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        .player-card:hover .avatar {
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
         .player-name {
             display: block;
-            font-size: 16px;
-            margin-bottom: 5px;
+            font-size: 15px;
             font-weight: 600;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .player-id {
             display: block;
-            font-size: 10px;
-            color: #8492a6;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-family: var(--ff-mono);
+            font-size: 11px;
+            color: var(--text-3);
         }
 
-        /* Ready Status Indicator */
         .ready-status {
-            margin-top: 10px;
-            font-size: 11px;
-            color: #ff4b2b;
-            /* Not ready */
+            margin-top: 12px;
+            font-size: 12px;
+            font-weight: 700;
             text-transform: uppercase;
-            font-weight: bold;
+            letter-spacing: 0.05em;
+            color: var(--text-3);
+            background: var(--surface);
+            padding: 4px 0;
+            border-radius: 4px;
         }
 
         .ready-status.is-ready {
-            color: #00ff88;
-            /* Ready */
+            color: var(--success);
+            background: var(--success-dim);
         }
 
-        /* Footer Controls */
-        .lobby-footer {
-            padding: 30px;
-            border-top: 1px solid rgba(0, 229, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .ready-status.is-busy {
+            color: var(--danger);
+            background: var(--danger-dim);
         }
 
-        .chat-preview {
-            color: #8492a6;
-            font-size: 13px;
-            font-style: italic;
-        }
-
-        .action-btn {
-            padding: 15px 40px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: none;
-        }
-
-        .ready-btn {
-            background: #00e5ff;
-            color: #000;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
-        }
-
-        .ready-btn:hover {
-            background: #00b8d4;
-            transform: scale(1.05);
-            box-shadow: 0 0 25px rgba(0, 229, 255, 0.5);
-        }
-
-
-        /* Action Button Container */
-        .action-group {
-            display: flex;
-            gap: 15px;
-        }
-
-        /* The New Play Button */
-        .play-btn {
-            background: transparent;
-            color: #00ff88;
-            /* Neon Green */
-            border: 2px solid #00ff88;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
-        }
-
-        .play-btn:hover:not(:disabled) {
-            background: #00ff88;
-            color: #000;
-            transform: scale(1.05);
-            box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
-        }
-
-        /* Disabled State (When waiting for players) */
-        .play-btn:disabled {
-            border-color: #333;
-            color: #555;
-            box-shadow: none;
-            cursor: not-allowed;
-            background: transparent;
-        }
-
-        /* Special border for the Lobby Host */
-        .host-card {
-            border-color: #ffd700;
-            /* Gold */
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
-        }
-
-        /* The Mini Play Button inside the card */
         .play-btn-mini {
-            margin-top: 15px;
-            padding: 10px;
+            margin-top: 16px;
+            padding: 10px 0;
             width: 100%;
-            border-radius: 6px;
-            font-weight: bold;
+            border-radius: var(--r-sm);
+            font-weight: 600;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.05em;
             cursor: pointer;
-            transition: all 0.3s ease;
-            background: transparent;
-            color: #00ff88;
-            border: 1px solid #00ff88;
+            transition: all 0.2s ease;
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
         }
 
         .play-btn-mini:hover:not(:disabled) {
-            background: #00ff88;
-            color: #000;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+            background: var(--text);
+            color: var(--bg);
+            border-color: var(--text);
         }
 
         .play-btn-mini:disabled {
-            border-color: #333;
-            color: #555;
+            opacity: 0.4;
             cursor: not-allowed;
+        }
+
+        .lobby-footer {
+            padding: 24px 40px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom-left-radius: var(--r-xl);
+            border-bottom-right-radius: var(--r-xl);
+        }
+
+        .chat-preview {
+            font-family: var(--ff-mono);
+            font-size: 13px;
+            color: var(--text-2);
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            margin-right: 24px;
+            transition: opacity 0.2s ease, border-color 0.2s ease;
+        }
+
+        .ready-btn {
+            padding: 14px 32px;
+            border-radius: var(--r-md);
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: var(--text);
+            color: var(--bg);
+        }
+
+        .ready-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .ready-btn.nowready {
             background: transparent;
+            color: var(--danger);
+            border: 2px solid var(--danger);
         }
 
-        /* Scrollbar Styling */
-        .player-grid::-webkit-scrollbar {
-            width: 6px;
+        .ready-btn.nowready:hover {
+            background: var(--danger-dim);
         }
 
-        .player-grid::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .player-grid::-webkit-scrollbar-thumb {
-            background: rgba(0, 229, 255, 0.2);
-            border-radius: 10px;
-        }
-
-        /* --- Challenge Prompt Overlay --- */
         .challenge-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(9, 10, 15, 0.8);
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.2s ease;
         }
 
-        /* Modal Card */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
         .challenge-card {
-            background: rgba(13, 25, 41, 0.95);
-            border: 1px solid #ff4b2b;
-            /* Aggressive red border for a challenge */
-            box-shadow: 0 0 30px rgba(255, 75, 43, 0.2), inset 0 0 20px rgba(255, 75, 43, 0.05);
-            border-radius: 16px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
             width: 100%;
             max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
         }
 
-        /* Header */
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
         .challenge-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255, 75, 43, 0.2);
+            padding: 24px;
+            background: var(--surface-3);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid var(--border);
         }
 
         .challenge-header h3 {
-            color: #ff4b2b;
             font-size: 18px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-shadow: 0 0 8px rgba(255, 75, 43, 0.4);
+            font-weight: 600;
+            color: var(--text);
         }
 
         .pulse-dot-red {
-            width: 10px;
-            height: 10px;
-            background: #ff4b2b;
+            width: 10px; height: 10px;
+            background: var(--danger);
             border-radius: 50%;
-            animation: pulseRed 1s infinite;
+            animation: pulseRed 1.5s infinite;
         }
 
-        /* Content & Challenger Info */
+        @keyframes pulseRed {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+
         .challenge-content {
-            padding: 30px 20px;
+            padding: 32px 24px;
             text-align: center;
         }
 
@@ -350,161 +391,102 @@
         }
 
         .challenger-avatar {
-            border-color: rgba(255, 75, 43, 0.5);
-            color: #ff4b2b;
-            width: 70px;
-            height: 70px;
-            font-size: 24px;
+            width: 72px; height: 72px;
+            font-size: 28px;
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
         }
 
         .challenge-text {
-            color: #8492a6;
-            font-size: 14px;
-            letter-spacing: 1px;
+            color: var(--text-2);
+            font-size: 15px;
+            line-height: 1.5;
         }
 
-        /* Actions */
         .challenge-actions {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px 24px 24px;
             display: flex;
-            gap: 15px;
-            border-bottom-left-radius: 16px;
-            border-bottom-right-radius: 16px;
+            gap: 12px;
         }
 
-        .challenge-actions .action-btn {
+        .action-btn {
             flex: 1;
-            padding: 12px 0;
+            padding: 12px;
+            border-radius: var(--r-md);
+            font-weight: 600;
             font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        /* Decline Button */
         .decline-btn {
             background: transparent;
-            color: #ff4b2b;
-            border: 1px solid #ff4b2b;
+            color: var(--text);
+            border: 1px solid var(--border);
         }
 
         .decline-btn:hover {
-            background: rgba(255, 75, 43, 0.1);
-            box-shadow: 0 0 15px rgba(255, 75, 43, 0.3);
-            transform: translateY(-2px);
+            background: var(--surface-3);
+            border-color: var(--text-3);
         }
 
-        /* Accept Button */
         .accept-btn {
-            background: rgba(0, 255, 136, 0.1);
-            color: #00ff88;
-            border: 1px solid #00ff88;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
         }
 
         .accept-btn:hover {
-            background: #00ff88;
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+            background: #facc15;
             transform: translateY(-2px);
         }
 
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes popIn {
-            from {
-                transform: scale(0.8) translateY(20px);
-                opacity: 0;
-            }
-
-            to {
-                transform: scale(1) translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes pulseRed {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.7);
-            }
-
-            70% {
-                transform: scale(1.2);
-                box-shadow: 0 0 0 10px rgba(255, 75, 43, 0);
-            }
-
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(255, 75, 43, 0);
-            }
-        }
     </style>
 </head>
-
 <body>
 
     <div class="lobby-card">
         <header class="lobby-header">
-            <div>
-                <a href="/leaderboard">🏆 Leaderboard</a>
-                <h2>Arena Lobby</h2>
-                <p id="room-id" style="font-size: 10px; color: #8492a6;">CHANNEL: GLOBAL_LOBBY_01</p>
+            <div class="header-title-area">
+                <h2>Tic Tac Toe</h2>
+                <div class="status-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="occupancy-text">0 Players Waiting</span>
+                </div>
             </div>
-            <div class="status-badge">
-                <span class="pulse-dot"></span>
-                <span id="occupancy-text">0/10 Combatants</span>
-            </div>
+            <a href="/leaderboard" class="leaderboard-btn">🏆 Leaderboard</a>
         </header>
 
-        <main class="player-grid" id="player-container">
-        </main>
+        <main class="player-grid" id="player-container"></main>
 
         <footer class="lobby-footer">
-            <div class="chat-preview" id="lobby-msg">
-                System: Awaiting combatant readiness...
-            </div>
-            <button class="action-btn ready-btn" id="ready-toggle">
-                Initialize Ready
-            </button>
+            <div class="chat-preview" id="lobby-msg">System: Awaiting combatant readiness...</div>
+            <button class="ready-btn" id="ready-toggle">Initialize Ready</button>
         </footer>
     </div>
+
     <div class="challenge-overlay" id="challenge-prompt" data-uid="" style="display: none;">
         <div class="challenge-card">
             <div class="challenge-header">
                 <h3>Incoming Challenge</h3>
                 <div class="pulse-dot-red"></div>
             </div>
-
             <div class="challenge-content">
                 <div class="challenger-profile">
                     <div class="avatar challenger-avatar">V</div>
                     <span class="player-name">VoidWalker_99</span>
-                    <span class="player-id">ELO: 2450 | PING: 24ms</span>
+                    <span class="player-id">ELO: 2450</span>
                 </div>
-                <p class="challenge-text">Has challenged you to a 1v1 Arena Deathmatch.</p>
+                <p class="challenge-text">Has invited you to a match. Do you accept?</p>
             </div>
-
             <div class="challenge-actions">
-                <button class="action-btn decline-btn">
-                    Decline
-                </button>
-                <button class="action-btn accept-btn">
-                    Accept
-                </button>
+                <button class="action-btn decline-btn">Decline</button>
+                <button class="action-btn accept-btn">Accept</button>
             </div>
         </div>
     </div>
+
     <script src="/static/js/lobby.js"></script>
-
 </body>
-
 </html>

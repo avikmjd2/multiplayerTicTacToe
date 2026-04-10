@@ -4,6 +4,15 @@ const registerBtn = document.getElementById('registerBtn');
 const nameInput = document.getElementById('usernameInput');
 const passwordInput = document.getElementById('passwordInput');
 
+
+
+async function loggedIn()
+{
+    resp = await fetch("/auth/whoami");
+    if(resp.ok) window.location.href = "/home";
+}
+
+
 async function startCam() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -67,3 +76,6 @@ registerBtn.addEventListener('click', () => {
     updateStatus("> FRAME_CAPTURED: TRANSMITTING_DATA...");
     registerUser(rawBase64, name, password);
 });
+
+
+loggedIn();

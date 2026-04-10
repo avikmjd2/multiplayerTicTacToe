@@ -3,34 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <title>Arena :: Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #0a0a0a;
+            --surface:      #141414;
+            --surface-2:    #1e1e1e;
+            --surface-3:    #2a2a2a;
+            --border:       rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --accent:       #eab308;
+            --accent-dim:   rgba(234, 179, 8, 0.1);
+            --success:      #22c55e;
+            --danger:       #ef4444;
+            --text:         #f8fafc;
+            --text-2:       #94a3b8;
+            --text-3:       #64748b;
+            --ff-body:      'DM Sans', sans-serif;
+            --ff-mono:      'JetBrains Mono', monospace;
+            --r-md:         12px;
+            --r-lg:         16px;
+            --r-xl:         24px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--ff-body);
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: cardRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes cardRise {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            padding: 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .welcome-text h2 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 4px;
+        }
+
+        .uid-badge {
+            font-family: var(--ff-mono);
+            font-size: 11px;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .main-content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-3);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .activity-log {
+            grid-column: span 2;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 24px;
+        }
+
+        .activity-log h3 {
+            font-size: 14px;
+            color: var(--text-2);
+            margin-bottom: 16px;
+            font-family: var(--ff-mono);
+            text-transform: uppercase;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .log-item:last-child { border-bottom: none; }
+
+        .footer-actions {
+            padding: 30px 40px;
+            background: rgba(0,0,0,0.2);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            padding: 14px 28px;
+            border-radius: var(--r-md);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .primary-btn {
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.1);
+        }
+
+        .logout-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .logout-btn:hover {
+            background: var(--danger-dim);
+        }
+    </style>
 </head>
 <body>
-    <div class="card">
-    <h2 id="greeting">Loading...</h2>
-    <p id="subtext"></p>
-    <button onclick="logout()">Logout</button>
-  </div>
 
-  <script>
-    fetch("/auth/whoami")
-    .then(res=>{
-        if(!res.ok) window.location.href = "/login";
-        return (res.json());
-    }).then(data=>{
-        // console.log(data)
-        document.getElementById("greeting").textContent = `Great! Nice to see you, ${data.name}!`;
-        document.getElementById("subtext").textContent  = `Logged in as ${data.uid}`;
+    <div class="dashboard-container">
+        <header>
+            <div class="welcome-text">
+                <h2 id="greeting">Initializing...</h2>
+                <div class="uid-badge" id="subtext">Awaiting Session</div>
+            </div>
+            <div class="status-indicator">
+                <span style="color: var(--success); font-weight: 700; font-size: 12px; font-family: var(--ff-mono);">● SYSTEM_ONLINE</span>
+            </div>
+        </header>
 
-    })
+        <main class="main-content">
+            <div class="stat-card">
+                <span class="stat-label">Current ELO</span>
+                <span class="stat-value">1,450</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Matches Won</span>
+                <span class="stat-value">24</span>
+            </div>
 
+            <div class="activity-log">
+                <h3>System Logs // Recent Activity</h3>
+                <div class="log-item">
+                    <span style="color: var(--text-3)">[14:20]</span>
+                    <span>Biometric Authentication Success</span>
+                    <span style="color: var(--success)">VALIDATED</span>
+                </div>
+                <div class="log-item">
+                    <span style="color: var(--text-3)">[12:05]</span>
+                    <span>Game Session vs User_882</span>
+                    <span style="color: var(--accent)">VICTORY</span>
+                </div>
+            </div>
+        </main>
 
-    async function logout() {
-      await fetch("/auth/logout", { method: "POST" });
-      window.location.href = "/login";
-    }
+        <footer class="footer-actions">
+            <button class="logout-btn" onclick="logout()">Terminate Session</button>
+            <button class="primary-btn" onclick="enterLobby()">Enter Game Lobby</button>
+        </footer>
+    </div>
 
-  </script>
+    <script>
+        //TODO: GOOD HOME PAGE NEEDED. COMPLETE SCRIPT.
+        async function fetchIdentity() {
+            try {
+                const res = await fetch("/auth/whoami");
+                if(!res.ok) {
+                    window.location.href = "/login";
+                    return;
+                }
+                const data = await res.json();
+                
+                document.getElementById("greeting").textContent = `Welcome back, ${data.name}`;
+                document.getElementById("subtext").textContent = `ID: ${data.uid.substring(0,12)}...`;
+            } catch (err) {
+                console.warn("Server unreachable.");
+                document.getElementById("greeting").textContent = "Connection Lost";
+            }
+        }
+
+        function enterLobby() {
+            window.location.href = "/lobby"; // Redirects to your Game Lobby page
+        }
+
+        async function logout() {
+            try {
+                await fetch("/auth/logout", { method: "POST" });
+                window.location.href = "/login";
+            } catch (e) {
+                window.location.href = "/login";
+            }
+        }
+
+        fetchIdentity();
+    </script>
 </body>
 </html>

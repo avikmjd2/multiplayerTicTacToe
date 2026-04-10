@@ -4,86 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arena :: Biometric Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Base Setup */
+        :root {
+            --bg:           #0a0a0a;
+            --surface:      #141414;
+            --surface-2:    #1e1e1e;
+            --surface-3:    #2a2a2a;
+            --border:       rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --accent:       #eab308;
+            --accent-dim:   rgba(234, 179, 8, 0.1);
+            --success:      #22c55e;
+            --text:         #f8fafc;
+            --text-2:       #94a3b8;
+            --text-3:       #64748b;
+            --ff-body:      'DM Sans', sans-serif;
+            --ff-mono:      'JetBrains Mono', monospace;
+            --r-sm:         8px;
+            --r-md:         12px;
+            --r-lg:         16px;
+            --r-xl:         24px;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
+            font-family: var(--ff-body);
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-position: center center;
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
-            color: #ffffff;
+            padding: 24px;
             overflow: hidden;
         }
 
-        /* Animated Tech Background */
-        .bg-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-            opacity: 0.2;
-            z-index: -1;
-        }
-
-        /* Main Glassmorphism Card */
+        /* Main Glassmorphism Card matching the Lobby */
         .login-card {
-            background: rgba(13, 25, 41, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            border-radius: 20px;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: var(--r-xl);
             padding: 40px;
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 229, 255, 0.1);
+            max-width: 480px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             text-align: center;
-            position: relative;
+            animation: cardRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
-        /* Cyberpunk Corner Decals */
-        .corner {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #00e5ff;
+        @keyframes cardRise {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .top-left { top: -5px; left: -5px; border-right: none; border-bottom: none; }
-        .bottom-right { bottom: -5px; right: -5px; border-left: none; border-top: none; }
+
+        .header-section {
+            margin-bottom: 8px;
+        }
 
         h2 {
-            font-size: 24px;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: #00e5ff;
-            margin-bottom: 5px;
-            text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
         }
 
         .subtitle {
-            color: #8492a6;
+            color: var(--text-3);
+            font-family: var(--ff-mono);
             font-size: 12px;
-            margin-bottom: 30px;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 0.1em;
+            font-weight: 600;
         }
 
         /* Camera Viewport Area */
         .camera-box {
             width: 100%;
             aspect-ratio: 4 / 3;
-            background: #000;
-            border-radius: 12px;
-            border: 1px solid rgba(0, 229, 255, 0.5);
+            background: var(--bg);
+            border-radius: var(--r-lg);
+            border: 1px solid var(--border);
             position: relative;
             overflow: hidden;
-            margin-bottom: 30px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 1);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
         }
 
         /* The actual video feed */
@@ -92,6 +114,7 @@
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1); /* Mirror effect for natural feel */
+            opacity: 0.9; /* Slight dim to match dark theme */
         }
 
         /* Scanning HUD Overlay */
@@ -99,18 +122,20 @@
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none;
-            border: 40px solid transparent;
             box-sizing: border-box;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: var(--r-lg);
         }
 
         .scan-bar {
             position: absolute;
             width: 100%;
-            height: 4px;
-            background: linear-gradient(to right, transparent, #00e5ff, transparent);
-            box-shadow: 0 0 20px #00e5ff;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
             top: 0;
             animation: scanLoop 3s ease-in-out infinite;
+            opacity: 0.8;
         }
 
         @keyframes scanLoop {
@@ -123,51 +148,67 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 60%;
-            height: 70%;
-            border: 1px dashed rgba(0, 229, 255, 0.4);
-            border-radius: 50% 50% 40% 40%;
+            width: 50%;
+            height: 60%;
+            border: 1px solid rgba(234, 179, 8, 0.3); /* Subtle accent color */
+            border-radius: var(--r-md);
+            background: linear-gradient(to bottom, rgba(234, 179, 8, 0.05), transparent 20%, transparent 80%, rgba(234, 179, 8, 0.05));
         }
+
+        /* Corner brackets for the target box */
+        .target-box::before, .target-box::after {
+            content: '';
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 2px solid var(--accent);
+            border-radius: var(--r-md);
+            opacity: 0.5;
+        }
+        .target-box::before { clip-path: polygon(0 0, 20px 0, 20px 20px, 0 20px); top: -2px; left: -2px; }
+        .target-box::after { clip-path: polygon(calc(100% - 20px) calc(100% - 20px), 100% calc(100% - 20px), 100% 100%, calc(100% - 20px) 100%); bottom: -2px; right: -2px; }
+
 
         /* Control Buttons */
         .btn-container {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
         }
 
         button {
-            padding: 15px;
-            border-radius: 8px;
+            padding: 14px;
+            border-radius: var(--r-md);
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: all 0.3s ease;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            font-family: var(--ff-body);
         }
 
+        /* Matches the 'Initialize Ready' button from Lobby */
         .primary-btn {
-            background: #00e5ff;
+            background: var(--text);
+            color: var(--bg);
             border: none;
-            color: #000;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
         }
 
         .primary-btn:hover {
-            background: #00b8d4;
-            box-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
             transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
         }
 
+        /* Matches the 'Decline' button from Lobby */
         .secondary-btn {
             background: transparent;
-            border: 1px solid #00e5ff;
-            color: #00e5ff;
+            color: var(--text);
+            border: 1px solid var(--border);
         }
 
         .secondary-btn:hover {
-            background: rgba(0, 229, 255, 0.1);
+            background: var(--surface-3);
+            border-color: var(--text-3);
         }
 
         /* Hidden Canvas for Capture Logic */
@@ -175,25 +216,27 @@
             display: none;
         }
 
-        /* Status Indicator */
+        /* Status Indicator (Matches the lobby's chat-preview box) */
         .status-bar {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #00e5ff;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: var(--ff-mono);
+            font-size: 13px;
+            color: var(--text-2);
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            text-align: left;
         }
     </style>
 </head>
 <body>
 
-    <div class="bg-overlay"></div>
-
     <div class="login-card">
-        <div class="corner top-left"></div>
-        <div class="corner bottom-right"></div>
-
-        <h2>Biometric Auth</h2>
-        <p class="subtitle">Phase 2 Verification Required</p>
+        
+        <div class="header-section">
+            <h2>Biometric Auth</h2>
+            <p class="subtitle">Phase 2 Verification</p>
+        </div>
 
         <div class="camera-box">
             <video id="videoFeed" autoplay playsinline></video>
@@ -210,12 +253,11 @@
         </div>
 
         <div class="status-bar" id="statusMessage">
-            > SYSTEM_READY: AWAITING_INPUT
+            System: Awaiting input...
         </div>
 
         <canvas id="captureCanvas" width="640" height="480"></canvas>
     </div>
-
 
     <script src="/static/js/login.js"></script>
 

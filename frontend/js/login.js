@@ -1,5 +1,10 @@
 const video = document.getElementById("videoFeed")
 
+async function loggedIn()
+{
+    resp = await fetch("/auth/whoami");
+    if(resp.ok) window.location.href = "/home";
+}
 
 async function startCam() 
 {
@@ -57,3 +62,6 @@ captureBtn.addEventListener('click',()=>{
     updateStatus("> FRAME_CAPTURED: ANALYZING...");
     loginAtpt(rawBase64);
 })
+
+
+loggedIn();

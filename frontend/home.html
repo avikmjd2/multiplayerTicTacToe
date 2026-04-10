@@ -204,7 +204,7 @@
         <main class="main-content">
             <div class="stat-card">
                 <span class="stat-label">Current ELO</span>
-                <span class="stat-value">1,450</span>
+                <span class="stat-value" id="elo-val">1,450</span>
             </div>
             <div class="stat-card">
                 <span class="stat-label">Matches Won</span>
@@ -236,7 +236,7 @@
         //TODO: GOOD HOME PAGE NEEDED. COMPLETE SCRIPT.
         async function fetchIdentity() {
             try {
-                const res = await fetch("/auth/whoami");
+                const res = await fetch("/auth/compdata");
                 if(!res.ok) {
                     window.location.href = "/login";
                     return;
@@ -245,6 +245,7 @@
                 
                 document.getElementById("greeting").textContent = `Welcome back, ${data.name}`;
                 document.getElementById("subtext").textContent = `ID: ${data.uid.substring(0,12)}...`;
+                document.getElementById("elo-val").textContent = data.elo;
             } catch (err) {
                 console.warn("Server unreachable.");
                 document.getElementById("greeting").textContent = "Connection Lost";

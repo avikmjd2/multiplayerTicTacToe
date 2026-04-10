@@ -99,9 +99,18 @@ class Lobby:
             await self.fallBack(mySocket,opp_socket)
             return
         
-        
         if(self.active_connections[opp_socket]["room_id"]!=None):
             return
+        db = get_db()
+        cursor = db.cursor()
+        user = cursor.execute(
+            "SELECT * FROM users WHERE uid = ?", (my_uid,)
+        ).fetchone()
+        
+        elo_rate = user["elo_rating"];
+        if not elo_rate:
+            elo_rate = "error"
+        
         
         self.active_connections[mySocket]["room_id"] = "awaiting"
         
@@ -109,7 +118,8 @@ class Lobby:
         ask_payload = {
             "type":"ask",
             "opp_uid": my_uid,
-            "opp_name": self.active_connections[mySocket]["name"]
+            "opp_name": self.active_connections[mySocket]["name"],
+            "elo_rating" :elo_rate
             
         }
         await opp_socket.send_json(ask_payload)

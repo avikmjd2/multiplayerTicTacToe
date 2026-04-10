@@ -98,6 +98,7 @@ function ask(data)
     challengePrompt.style.display = 'flex';
     challengePrompt.querySelector('.player-name').textContent = data.opp_name;
     challengePrompt.querySelector('.challenger-avatar').textContent = data.opp_name.substr(0,1);
+    challengePrompt.querySelector(".player-id").textContent = data.elo_rating
     challengePrompt.dataset.uid = data.opp_uid;
 }
 

@@ -34,6 +34,7 @@ def get_face_encoding(image_data):
     try:
         image_bytes = _to_bytes(image_data)
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        # image.thumbnail((500, 500))
         image_np = np.array(image)
 
         face_locations = face_recognition.face_locations(image_np)
@@ -53,13 +54,13 @@ def get_face_encoding(image_data):
 
 def find_closest_match(login_image_data, db_images_dict):
     """
-    Compares a login attempt against a dictionary of known profile images.
+    Compares a login attempt against a dictionary of known profile images ENCODING.
 
     :param login_image_data:
         The webcam capture as raw bytes or a Base64 string.
     :param db_images_dict:
         A dictionary mapping { uid: image_data } fetched from MongoDB,
-        where each value may be raw bytes or a Base64 string.
+        where each value IS IMAGE ENCODING.
     :return:
         The UID of the closest matching face, or None if no face is
         detected in the login frame or no match clears the threshold.
@@ -75,15 +76,23 @@ def find_closest_match(login_image_data, db_images_dict):
     best_distance = float("inf")
 
     print(f"Comparing against {len(db_images_dict)} records in database...")
-    for uid, db_img_data in db_images_dict.items():
-        db_encoding = get_face_encoding(db_img_data)
-        if db_encoding is None:
-            continue
-
-        distance = face_recognition.face_distance([db_encoding], login_encoding)[0]
-        if distance < best_distance:
-            best_distance = distance
-            best_match_uid = uid
+    
+    uids = []
+    encodings = []
+    for uid, enc in db_images_dict.items():
+        if enc is not None:
+            uids.append(uid)
+            encodings.append(np.array(enc))
+        
+    if not encodings:
+        return None
+    
+    encodings = np.array(encodings)
+    
+    distances = face_recognition.face_distance(encodings, login_encoding)
+    best_index = np.argmin(distances)
+    best_distance = distances[best_index]
+    best_match_uid = uids[best_index]
 
     threshold = 0.5
     if best_distance <= threshold:

@@ -148,3 +148,27 @@ def whoami(request:Request):
     
     return {"uid": uid, "name": request.session.get("name")}
 
+
+@router.get("/compdata")
+def whoami(request:Request):
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid User")
+        
+    uid = request.session.get("uid")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    
+    db=get_db()
+    cursor = db.cursor()
+    
+    user = cursor.execute(
+        "SELECT * FROM users WHERE uid = ?", (uid,)
+    ).fetchone()
+    
+    elo_rate = user["elo_rating"];
+    if not elo_rate:
+        elo_rate = "error"
+    
+    
+    return {"uid": uid, "name": request.session.get("name"),"elo": elo_rate}
+

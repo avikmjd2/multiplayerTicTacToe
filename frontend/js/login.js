@@ -34,6 +34,7 @@ async function loginAtpt(img)
     if(!resp.ok)
     {
         updateStatus("> Unverified User Spotted...");
+        hideLoader();
         return;
     }
 
@@ -60,8 +61,56 @@ captureBtn.addEventListener('click',()=>{
     // console.log("Captured Image String:", base64Image);
     const rawBase64 = base64Image.split(",")[1];
     updateStatus("> FRAME_CAPTURED: ANALYZING...");
+    showLoader();
     loginAtpt(rawBase64);
 })
+
+
+ const messages = [
+  "Waking up the servers...",
+  "Knocking on the backend door...",
+  "Summoning your data from the cloud...",
+  "Polishing things up...",
+  "Stretching the code a bit...",
+  "Making things look awesome...",
+  "Aligning pixels perfectly...",
+  "Rolling for good vibes...",
+  "Loading... please act impressed",
+  "Almost there... we promise",
+  "Just a tiny moment more..."
+];
+
+let loadingInterval = null;
+function showLoader() 
+{
+    const overlay = document.getElementById("loading-overlay");
+    const text = document.getElementById("loading-text");
+
+    let index = 0;
+    text.innerText = messages[index];
+
+    overlay.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    loadingInterval = setInterval(() => {
+      index = (index + 1) % messages.length;
+      text.innerText = messages[index];
+    }, 3000);
+}
+
+function hideLoader() 
+{
+    const overlay = document.getElementById("loading-overlay");
+
+    overlay.classList.remove("active");
+    document.body.style.overflow = "";
+
+    if (loadingInterval) 
+    {
+      clearInterval(loadingInterval);
+      loadingInterval = null;
+    }
+}
 
 
 loggedIn();

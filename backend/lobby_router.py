@@ -217,6 +217,7 @@ async def create_room(my_uid,opp_uid):
 
     if(not my_uid or not opp_uid):
         # raise HTTPException(status_code=1008, detail="Not logged in or invalid uid")
+        print(f"[DEBUG] create_room failed: my_uid={my_uid}, opp_uid={opp_uid}")
         return None
     
     created = False
@@ -228,8 +229,11 @@ async def create_room(my_uid,opp_uid):
     my_query = cursor.execute("SELECT room_id FROM users WHERE uid = ?",(my_uid,)).fetchone()
     opp_query = cursor.execute("SELECT room_id FROM users WHERE uid = ?",(opp_uid,)).fetchone()
     
+    print(f"[DEBUG] create_room: my_query={my_query}, my_query[0]={my_query[0] if my_query else 'None'}, opp_query={opp_query}, opp_query[0]={opp_query[0] if opp_query else 'None'}")
+    
     if (my_query and my_query[0] != -1) or (opp_query and opp_query[0] != -1):
         # raise HTTPException(status_code=401, detail="User already playing")
+        print(f"[DEBUG] create_room failed: players already in a room")
         return None
     
     try:

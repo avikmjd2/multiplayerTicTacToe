@@ -144,7 +144,7 @@ function updateLobbyUI(data)
         let disableTag="";
 
 
-        if (user.room_id !== null) 
+        if (user.room_id) 
         {
             readyText = "BUSY";
             readyClass = "is-busy"; 

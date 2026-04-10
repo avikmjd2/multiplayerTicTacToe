@@ -4,7 +4,6 @@ __pycache__/
 logic.md
 .env
 uv.lock
-database.db
+database.db.old
 database.dbuv.lock
 
-*.db

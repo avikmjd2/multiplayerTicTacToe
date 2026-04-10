@@ -4,7 +4,7 @@ import requests
 import base64
 from dotenv import load_dotenv
 from pymongo import MongoClient
-from backend.database import get_db
+from database import get_db
 
 load_dotenv()
 

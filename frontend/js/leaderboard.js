@@ -8,6 +8,7 @@ async function loadLeaderboard() {
     const res = await fetch("/api/leaderboard");
     if (!res.ok) throw new Error("Failed to fetch");
     const players = await res.json();
+    console.log(players);
     if (players.length === 0) {
       tbody.innerHTML = `<tr><td colspan="3" class="loading">No players yet.</td></tr>`;
       return;

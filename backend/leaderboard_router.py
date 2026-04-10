@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse, FileResponse
-from database import get_mongo_db
+from database import get_mongo_db,get_db
 
 router = APIRouter()
 
@@ -10,13 +10,21 @@ def leaderboard_page():
 
 @router.get("/api/leaderboard")
 def get_leaderboard():
-    client = get_mongo_db()
-    db = client["arena"]       # confirm db name with your friend
-    users = db["users"]        # confirm collection name with your friend
+    conn = get_db()
+    cursor = conn.cursor()
+    
 
-    rows = list(users.find(
-        {},
-        {"_id": 0, "uid": 1, "name": 1, "elo_rating": 1}
-    ).sort("elo_rating", -1))
+    cursor.execute("""
+        SELECT uid, name, elo_rating
+        FROM users
+        ORDER BY elo_rating DESC
+    """)
 
-    return JSONResponse(rows)
+    rows = cursor.fetchall()
+    
+    result = [
+        {"uid": row[0], "name": row[1], "elo_rating": row[2]}
+        for row in rows
+    ]
+
+    return JSONResponse(result)

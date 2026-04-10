@@ -238,14 +238,18 @@ async def create_room(my_uid,opp_uid):
     
     try:
         cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(room_id,my_uid))
+        if cursor.rowcount == 0:
+            raise Exception(f"User {my_uid} not found in database")
         cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(room_id,opp_uid))
         
         #TODO: Set data in room
         board_id = str(uuid.uuid4())
         cursor.execute("INSERT INTO room (room_id,player1_uid,player2_uid,board_id) VALUES (?,?,?,?)",(room_id,my_uid,opp_uid,board_id))
-        created = True
+        if cursor.rowcount == 0:
+            raise Exception(f"User {opp_uid} not found in database")
         
         db.commit()
+        created = True
     except Exception as e:
         print(f"An error occured whule creating room id. More Details {e}")
         db.rollback()

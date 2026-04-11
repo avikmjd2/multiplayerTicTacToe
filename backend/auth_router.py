@@ -150,9 +150,7 @@ def whoami(request:Request):
 
 
 @router.get("/compdata")
-def whoami(request:Request):
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid User")
+def getInfo(request:Request):
         
     uid = request.session.get("uid")
     if not uid:
@@ -164,6 +162,9 @@ def whoami(request:Request):
     user = cursor.execute(
         "SELECT * FROM users WHERE uid = ?", (uid,)
     ).fetchone()
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid User")
     
     elo_rate = user["elo_rating"];
     if not elo_rate:

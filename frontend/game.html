@@ -4,13 +4,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arena :: Match Protocol</title>
+    <title>Tic-Tac-Toe :: Match</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --bg: #c8c2b8;
+            --surface: #c2bbb1;
+            --text-primary: #3d3835;
+            --text-secondary: #5e5750;
+            --text-muted: #7a736c;
+            --shadow-dark: rgba(0, 0, 0, 0.15);
+            --shadow-light: rgba(255, 255, 255, 0.42);
+            --x-color-light: #7d7875;
+            --x-color-dark: #56524f;
+            --o-color-light: #f2eee8;
+            --o-color-dark: #dbd5cb;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
         }
 
         body {
@@ -18,232 +39,488 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: radial-gradient(circle at center, #1b2735 0%, #090a0f 100%);
-            color: #ffffff;
+            background: var(--bg);
+            font-family: 'DM Sans', 'Inter', 'Segoe UI', sans-serif;
+            color: var(--text-primary);
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .bg-overlay {
+        /* Soft ambient lighting overlay */
+        body::before {
+            content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
-            opacity: 0.2;
-            z-index: -1;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 25% 15%, rgba(255, 255, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse at 75% 85%, rgba(0, 0, 0, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .game-card {
-            background: rgba(13, 25, 41, 0.85);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 229, 255, 0.3);
-            border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 229, 255, 0.1);
-            text-align: center;
+        /* ── Layout ── */
+        .game-container {
             position: relative;
-        }
-
-        /* Cyberpunk Decals */
-        .corner {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            border: 3px solid #00e5ff;
-        }
-
-        .top-left {
-            top: -5px;
-            left: -5px;
-            border-right: none;
-            border-bottom: none;
-        }
-
-        .bottom-right {
-            bottom: -5px;
-            right: -5px;
-            border-left: none;
-            border-top: none;
-        }
-
-        header {
-            margin-bottom: 30px;
+            z-index: 1;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            border-bottom: 1px solid rgba(0, 229, 255, 0.2);
-            padding-bottom: 20px;
+            padding: 40px 32px;
+            animation: fadeIn 0.6s ease-out;
         }
 
-        h2 {
-            font-size: 22px;
-            letter-spacing: 5px;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Header ── */
+        .game-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 7px;
             text-transform: uppercase;
-            color: #00e5ff;
-            text-shadow: 0 0 15px rgba(0, 229, 255, 0.6);
+            color: var(--text-secondary);
+            margin-bottom: 6px;
         }
 
         .symbol-badge {
-            background: rgba(0, 229, 255, 0.1);
-            padding: 8px 16px;
-            border-radius: 5px;
-            border: 1px solid rgba(0, 229, 255, 0.5);
-            font-weight: bold;
-            letter-spacing: 2px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            transition: opacity 0.3s ease;
         }
 
-        /* Status Indicator */
+        /* ── Status Text ── */
         .game-status {
-            font-size: 18px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 30px;
-            height: 30px;
-            transition: color 0.3s ease;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 36px;
+            letter-spacing: 0.3px;
+            transition: color 0.4s ease, opacity 0.4s ease;
+            text-align: center;
+            line-height: 1.3;
         }
 
         .status-waiting {
-            color: #8492a6;
+            color: var(--text-secondary);
+            animation: status-breathe 3s ease-in-out infinite;
         }
 
         .status-my-turn {
-            color: #00ff88;
-            text-shadow: 0 0 15px #00ff88;
+            color: var(--text-primary);
         }
 
         .status-opponent-turn {
-            color: #ff9900;
+            color: var(--text-secondary);
         }
 
         .status-win {
-            color: #00e5ff;
-            text-shadow: 0 0 25px #00e5ff;
-            font-size: 26px;
-            animation: pulse 1.5s infinite;
+            color: var(--text-primary);
+            animation: gentle-pulse 2s ease-in-out infinite;
         }
 
         .status-lose {
-            color: #ff0055;
-            text-shadow: 0 0 15px #ff0055;
+            color: #7a5f55;
         }
 
         .status-draw {
-            color: #cccccc;
+            color: var(--text-secondary);
         }
 
-        @keyframes pulse {
-            0% {
+        @keyframes gentle-pulse {
+
+            0%,
+            100% {
                 transform: scale(1);
             }
 
             50% {
-                transform: scale(1.05);
+                transform: scale(1.03);
+            }
+        }
+
+        @keyframes status-breathe {
+
+            0%,
+            100% {
+                opacity: 0.7;
             }
 
-            100% {
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* ── The Board ── */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            padding: 26px;
+            background: var(--surface);
+            border-radius: 30px;
+            box-shadow:
+                14px 14px 28px var(--shadow-dark),
+                -14px -14px 28px var(--shadow-light),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            margin-bottom: 36px;
+            animation: boardPop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) 0.15s both;
+        }
+
+        @keyframes boardPop {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            to {
+                opacity: 1;
                 transform: scale(1);
             }
         }
 
-        /* The Board */
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 110px);
-            gap: 15px;
-            justify-content: center;
-            margin: 0 auto;
-        }
-
+        /* ── Cells ── */
         .cell {
-            width: 110px;
-            height: 110px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(0, 229, 255, 0.2);
-            border-radius: 12px;
+            width: 118px;
+            height: 118px;
+            background: var(--surface);
+            border-radius: 22px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 60px;
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            transition: transform 0.2s ease, box-shadow 0.25s ease;
+            box-shadow:
+                inset 7px 7px 14px rgba(0, 0, 0, 0.11),
+                inset -7px -7px 14px rgba(255, 255, 255, 0.32);
+            border: none;
+            position: relative;
+            font-size: 0;
+            /* hide text; pieces rendered via pseudo-elements */
+            will-change: transform;
         }
 
-        .cell:hover {
-            border-color: rgba(0, 229, 255, 0.8);
-            background: rgba(0, 229, 255, 0.05);
-            box-shadow: inset 0 0 25px rgba(0, 229, 255, 0.2), 0 0 15px rgba(0, 229, 255, 0.4);
+        .cell:hover:not(.occupied) {
+            box-shadow:
+                inset 9px 9px 18px rgba(0, 0, 0, 0.14),
+                inset -9px -9px 18px rgba(255, 255, 255, 0.36);
+            transform: scale(0.97);
+        }
+
+        .cell:active:not(.occupied) {
+            transform: scale(0.93);
+            box-shadow:
+                inset 10px 10px 20px rgba(0, 0, 0, 0.16),
+                inset -10px -10px 20px rgba(255, 255, 255, 0.3);
         }
 
         .cell.occupied {
-            cursor: not-allowed;
-            background: rgba(0, 0, 0, 0.6);
+            cursor: default;
         }
 
-        .cell.occupied:hover {
-            border-color: rgba(0, 229, 255, 0.2);
-            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+        /* ── Clay 3D X Mark ── */
+        .cell.x-mark {
+            font-size: 0;
         }
 
-        .x-mark {
-            color: #ff0055;
-            text-shadow: 0 0 20px #ff0055;
+        .cell.x-mark::before,
+        .cell.x-mark::after {
+            content: '';
+            position: absolute;
+            width: 17px;
+            height: 68px;
+            border-radius: 9px;
+            background: linear-gradient(155deg, var(--x-color-light) 0%, var(--x-color-dark) 100%);
+            box-shadow:
+                3px 4px 7px rgba(0, 0, 0, 0.28),
+                -2px -2px 5px rgba(255, 255, 255, 0.12),
+                inset 1px 2px 3px rgba(255, 255, 255, 0.12),
+                inset -1px -2px 3px rgba(0, 0, 0, 0.18);
         }
 
-        .o-mark {
-            color: #00ff88;
-            text-shadow: 0 0 20px #00ff88;
+        .cell.x-mark::before {
+            animation: clay-x-arm1 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
 
-        /* Post-game actions */
+        .cell.x-mark::after {
+            animation: clay-x-arm2 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.06s both;
+        }
+
+        @keyframes clay-x-arm1 {
+            0% {
+                transform: rotate(45deg) scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: rotate(45deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes clay-x-arm2 {
+            0% {
+                transform: rotate(-45deg) scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: rotate(-45deg) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ── Clay 3D O Mark ── */
+        .cell.o-mark {
+            font-size: 0;
+        }
+
+        .cell.o-mark::before {
+            content: '';
+            position: absolute;
+            width: 66px;
+            height: 66px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, var(--o-color-light) 0%, var(--o-color-dark) 100%);
+            box-shadow:
+                4px 5px 10px rgba(0, 0, 0, 0.2),
+                -3px -3px 7px rgba(255, 255, 255, 0.45),
+                inset 2px 2px 5px rgba(255, 255, 255, 0.35),
+                inset -2px -2px 5px rgba(0, 0, 0, 0.08);
+            animation: clay-o-ring 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        .cell.o-mark::after {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--surface);
+            box-shadow:
+                inset 3px 3px 7px rgba(0, 0, 0, 0.1),
+                inset -3px -3px 7px rgba(255, 255, 255, 0.28);
+            animation: clay-o-hole 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+        }
+
+        @keyframes clay-o-ring {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes clay-o-hole {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Winning cells glow */
+        .cell.win-cell {
+            box-shadow:
+                inset 5px 5px 10px rgba(0, 0, 0, 0.08),
+                inset -5px -5px 10px rgba(255, 255, 255, 0.3),
+                0 0 18px rgba(180, 170, 155, 0.5);
+            animation: win-glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes win-glow {
+            from {
+                box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.08), inset -5px -5px 10px rgba(255, 255, 255, 0.3), 0 0 12px rgba(180, 170, 155, 0.3);
+            }
+
+            to {
+                box-shadow: inset 5px 5px 10px rgba(0, 0, 0, 0.08), inset -5px -5px 10px rgba(255, 255, 255, 0.3), 0 0 24px rgba(180, 170, 155, 0.6);
+            }
+        }
+
+        /* ── Post-Game Actions ── */
         .actions {
-            margin-top: 30px;
+            margin-top: 4px;
             display: none;
+            animation: fadeIn 0.4s ease-out;
         }
 
         .btn-return {
-            background: transparent;
-            color: #00e5ff;
-            border: 2px solid #00e5ff;
-            padding: 12px 30px;
-            font-size: 14px;
-            font-weight: bold;
+            background: var(--surface);
+            color: var(--text-primary);
+            border: none;
+            padding: 16px 44px;
+            font-size: 12px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 8px;
+            letter-spacing: 3px;
+            border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            font-family: 'DM Sans', sans-serif;
+            box-shadow:
+                7px 7px 14px var(--shadow-dark),
+                -7px -7px 14px var(--shadow-light),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            will-change: transform;
         }
 
         .btn-return:hover {
-            background: #00e5ff;
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+            box-shadow:
+                inset 5px 5px 10px rgba(0, 0, 0, 0.1),
+                inset -5px -5px 10px rgba(255, 255, 255, 0.28);
+            transform: scale(0.98);
+        }
+
+        .btn-return:active {
+            transform: scale(0.94);
+        }
+
+        /* ── Decorative Sparkle ── */
+        .sparkle {
+            position: fixed;
+            bottom: 28px;
+            right: 32px;
+            width: 22px;
+            height: 22px;
+            opacity: 0.25;
+            animation: sparkle-twinkle 4s ease-in-out infinite;
+        }
+
+        .sparkle svg {
+            fill: var(--text-muted);
+        }
+
+        @keyframes sparkle-twinkle {
+
+            0%,
+            100% {
+                opacity: 0.15;
+                transform: scale(1) rotate(0deg);
+            }
+
+            50% {
+                opacity: 0.35;
+                transform: scale(1.1) rotate(15deg);
+            }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 520px) {
+            .game-container {
+                padding: 28px 16px;
+            }
+
+            .cell {
+                width: 88px;
+                height: 88px;
+                border-radius: 18px;
+            }
+
+            .board {
+                gap: 12px;
+                padding: 20px;
+                border-radius: 24px;
+            }
+
+            .cell.x-mark::before,
+            .cell.x-mark::after {
+                width: 13px;
+                height: 50px;
+                border-radius: 7px;
+            }
+
+            .cell.o-mark::before {
+                width: 48px;
+                height: 48px;
+            }
+
+            .cell.o-mark::after {
+                width: 20px;
+                height: 20px;
+            }
+
+            .game-status {
+                font-size: 22px;
+                margin-bottom: 28px;
+            }
+
+            .game-label {
+                font-size: 10px;
+                letter-spacing: 5px;
+            }
+
+            .btn-return {
+                padding: 14px 32px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .cell {
+                width: 76px;
+                height: 76px;
+                border-radius: 16px;
+            }
+
+            .board {
+                gap: 10px;
+                padding: 16px;
+            }
+
+            .cell.x-mark::before,
+            .cell.x-mark::after {
+                width: 11px;
+                height: 42px;
+            }
+
+            .cell.o-mark::before {
+                width: 42px;
+                height: 42px;
+            }
+
+            .cell.o-mark::after {
+                width: 18px;
+                height: 18px;
+            }
+
+            .game-status {
+                font-size: 19px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    <div class="bg-overlay"></div>
-
-    <div class="game-card">
-        <div class="corner top-left"></div>
-        <div class="corner bottom-right"></div>
-
-        <header>
-            <h2>Arena Match</h2>
-            <div class="symbol-badge" id="player-symbol">SYNCING...</div>
-        </header>
+    <div class="game-container">
+        <div class="game-label">TIC-TAC-TOE</div>
+        <div class="symbol-badge" id="player-symbol"></div>
 
         <div class="game-status status-waiting" id="game-status">
-            CONNECTING TO SERVER...
+            Connecting...
         </div>
 
         <div class="board" id="board">
@@ -264,6 +541,13 @@
         <div class="actions" id="actions-panel">
             <button class="btn-return" onclick="window.location.href='/lobby'">Return to Lobby</button>
         </div>
+    </div>
+
+    <!-- Decorative sparkle -->
+    <div class="sparkle">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z" />
+        </svg>
     </div>
 
     <script src="/static/js/game.js"></script>

@@ -5,7 +5,7 @@ const roomId = pathParts[pathParts.length - 1];
 // WebSocket connection (opening persistent connection)
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/${roomId}`);
 
-// UI Elements (fetching useful Elements all at once)
+// UI Elements
 const statusEl = document.getElementById("game-status");
 const symbolEl = document.getElementById("player-symbol");
 const cells = document.querySelectorAll(".cell");
@@ -14,17 +14,16 @@ const actionsPanel = document.getElementById("actions-panel");
 let mySymbol = null; // X or O or SPECTATOR
 let currentGameState = "waiting";
 
-// Handle Socket Open (runs when connection established)
+// Handle Socket Open
 socket.onopen = () => {
-    statusEl.innerText = "WAITING FOR COMBATANT...";
+    statusEl.innerText = "Waiting for opponent...";
     statusEl.className = "game-status status-waiting";
 };
 
-// Handle Socket Close/Disconnect (runs when disconnect, shows error only when game not ended cause on end, disconnect expected)
+// Handle Socket Close/Disconnect
 socket.onclose = () => {
-    if (!currentGameState.startsWith("win_") && !currentGameState.startsWith("forfeit_") && currentGameState !== "draw"){
-        statusEl.innerText = "SERVER CONNECTION LOST";
-        statusEl.className = "game-status status-lose";
+    if (!currentGameState.startsWith("win_") && !currentGameState.startsWith("forfeit_") && currentGameState !== "draw") {
+        setStatus("Connection Lost", "status-lose");
         showReturnButton();
     }
 };
@@ -35,7 +34,8 @@ socket.onmessage = (event) => {
 
     if (data.type === "init") {
         mySymbol = data.symbol;
-        symbolEl.innerText = `YOU ARE [ ${mySymbol} ]`;
+        symbolEl.innerText = `Playing as ${mySymbol}`;
+        symbolEl.style.opacity = "1";
     }
     else if (data.type === "update") {
         updateBoard(data.board);
@@ -63,52 +63,52 @@ function updateBoard(boardGrid) {
     });
 }
 
-// Update the Top Text based on whose turn it is
+// Smooth status text updater with fade transition
+function setStatus(text, className) {
+    statusEl.style.opacity = "0";
+    setTimeout(() => {
+        statusEl.innerText = text;
+        statusEl.className = `game-status ${className}`;
+        statusEl.style.opacity = "1";
+    }, 150);
+}
+
+// Update the status text based on whose turn / game state
 function updateStatus(turn, status) {
     currentGameState = status;
 
     if (status === "waiting") {
-        statusEl.innerText = "WAITING FOR OPPONENT...";
-        statusEl.className = "game-status status-waiting";
+        setStatus("Waiting for opponent...", "status-waiting");
     }
     else if (status === "playing") {
         if (turn === mySymbol) {
-            statusEl.innerText = "> YOUR TURN <";
-            statusEl.className = "game-status status-my-turn";
+            setStatus(`Your Turn (${mySymbol})`, "status-my-turn");
         } else {
-            statusEl.innerText = "OPPONENT COMPUTING...";
-            statusEl.className = "game-status status-opponent-turn";
+            setStatus(`Player ${turn}'s Turn`, "status-opponent-turn");
         }
     }
     else if (status.startsWith("win_")) {
-        // e.g. "win_X"
         const winnerSymbol = status.split("_")[1];
         if (winnerSymbol === mySymbol) {
-            statusEl.innerText = "VICTORY ACHIEVED";
-            statusEl.className = "game-status status-win";
+            setStatus("You Win!", "status-win");
         } else {
-            statusEl.innerText = "MATCH FAILED";
-            statusEl.className = "game-status status-lose";
+            setStatus("You Lose", "status-lose");
         }
         showReturnButton();
     }
     else if (status === "draw") {
-        statusEl.innerText = "STALEMATE RESOLVED";
-        statusEl.className = "game-status status-draw";
+        setStatus("It's a Draw", "status-draw");
         showReturnButton();
     }
     else if (status.startsWith("forfeit_")) {
         const quitter = status.split("_")[1];
         if (quitter === mySymbol) {
-            statusEl.innerText = "YOU DISCONNECTED";
-            statusEl.className = "game-status status-lose";
+            setStatus("You Disconnected", "status-lose");
         } else {
-            statusEl.innerText = "OPPONENT DISCONNECTED — YOU WIN";
-            statusEl.className = "game-status status-win";
+            setStatus("Opponent Left — You Win!", "status-win");
         }
         showReturnButton();
     }
-
 }
 
 // Click Listeners for sending moves
@@ -131,6 +131,14 @@ cells.forEach(cell => {
     });
 });
 
+// Show return button with smooth entrance
 function showReturnButton() {
     actionsPanel.style.display = "block";
+    // Disable further cell clicks visually
+    cells.forEach(cell => {
+        if (!cell.classList.contains("occupied")) {
+            cell.style.cursor = "default";
+            cell.style.opacity = "0.7";
+        }
+    });
 }

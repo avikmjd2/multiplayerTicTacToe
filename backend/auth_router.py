@@ -164,6 +164,7 @@ def getInfo(request:Request):
     ).fetchone()
     
     if not user:
+        logout()
         raise HTTPException(status_code=401, detail="Invalid User")
     
     elo_rate = user["elo_rating"];

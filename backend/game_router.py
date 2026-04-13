@@ -23,6 +23,7 @@ class GameRoom:
         self.count_of_players = 0
         self.current_turn = "X" # X or Y
         self.status = "waiting" # waiting or playing or win_X/O or draw
+        self.win_line = None # list of [r,c] cells that form the winning line
 
     async def connect(self, websocket: WebSocket, uid: str):
         await websocket.accept()
@@ -51,7 +52,8 @@ class GameRoom:
             "type":"update",
             "board":self.board,
             "turn": self.current_turn,
-            "status": self.status
+            "status": self.status,
+            "win_line": self.win_line
         }
         # self.players has X and O (both Players)
         for ws in self.players.values():
@@ -83,8 +85,10 @@ class GameRoom:
         self.board[row][col] = curr_player
 
         # Checking for Win or Draw
-        if self.win_checker(curr_player):
-            self.status = f"win_{curr_player}" 
+        win_cells = self.win_checker(curr_player)
+        if win_cells:
+            self.status = f"win_{curr_player}"
+            self.win_line = win_cells
         elif self.draw_checker(curr_player):
             self.status = "draw"
 
@@ -116,19 +120,21 @@ class GameRoom:
         # Checking all 3 rows
         for r in range(3):
             if self.board[r][0] == curr_player and self.board[r][1] == curr_player and self.board[r][2] == curr_player:
-                return True
+                return [[r,0],[r,1],[r,2]]
 
         # Checking all 3 cols
         for c in range(3):
             if self.board[0][c] == curr_player and self.board[1][c] == curr_player and self.board[2][c] == curr_player:
-                return True
+                return [[0,c],[1,c],[2,c]]
 
         # Checking Diagonals
         if self.board[0][0] == curr_player and self.board[1][1] == curr_player and self.board[2][2] == curr_player:
-            return True
+            return [[0,0],[1,1],[2,2]]
             
         if self.board[0][2] == curr_player and self.board[1][1] == curr_player and self.board[2][0] == curr_player:
-            return True
+            return [[0,2],[1,1],[2,0]]
+        
+        return None
   
 
     def draw_checker(self,curr_player):
@@ -174,7 +180,8 @@ class GameRoom:
                 "type": "update",
                 "board": self.board,
                 "turn": self.current_turn,
-                "status": self.status
+                "status": self.status,
+                "win_line": self.win_line
             }
 
             if remaining_player in self.players:

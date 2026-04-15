@@ -4,20 +4,114 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Global Leaderboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #c8c2b8;
+      --surface: #c2bbb1;
+      --text-primary: #3d3835;
+      --text-secondary: #5e5750;
+      --text-muted: #7a736c;
+      --shadow-dark: rgba(0, 0, 0, 0.15);
+      --shadow-light: rgba(255, 255, 255, 0.42);
+      --live-dot: #8aad8a;
+      --live-dot-err: #c97c6e;
+      --elo-1: #a07c38;
+      --elo-2: #7a736c;
+      --elo-3: #8c6845;
+      --err-color: #a0695a;
+      --table-divider: rgba(0,0,0,0.06);
+      --table-row-divider: rgba(0,0,0,0.05);
+      --table-hover: rgba(255,255,255,0.18);
+      --search-inset-dark: rgba(0,0,0,0.10);
+      --search-inset-light: rgba(255,255,255,0.30);
+      --search-focus-dark: rgba(0,0,0,0.13);
+      --search-focus-light: rgba(255,255,255,0.32);
+      --ambient-1: rgba(255,255,255,0.18);
+      --ambient-2: rgba(0,0,0,0.06);
+      --sparkle-fill: #7a736c;
+    }
+
+    [data-theme="dark"] {
+          /* Deep, cool slate/indigo base */
+          --bg: #0f111a;
+          --surface: #171a23;
+          
+          /* Crisp, cool-toned typography */
+          --text-primary: #e2eaf4;
+          --text-secondary: #94a3b8;
+          --text-muted: #475569;
+          
+          /* Neumorphic shadows tuned for cool dark mode */
+          --shadow-dark: rgba(0, 0, 0, 0.55);
+          --shadow-light: rgba(255, 255, 255, 0.02);
+          
+          /* Soft pastel-neon accents */
+          --live-dot: #2dd4bf;       /* Soft teal */
+          --live-dot-err: #fb7185;   /* Soft rose */
+          --err-color: #f43f5e;
+          
+          /* Cooled-down podium colors */
+          --elo-1: #fcd34d;          /* Soft gold */
+          --elo-2: #cbd5e1;          /* Cool silver */
+          --elo-3: #e8a598;          /* Muted copper/rose-gold */
+          
+          /* Subtle structural dividers */
+          --table-divider: rgba(255, 255, 255, 0.05);
+          --table-row-divider: rgba(255, 255, 255, 0.02);
+          --table-hover: rgba(255, 255, 255, 0.03);
+          
+          /* Search bar depth */
+          --search-inset-dark: rgba(0, 0, 0, 0.45);
+          --search-inset-light: rgba(255, 255, 255, 0.02);
+          --search-focus-dark: rgba(0, 0, 0, 0.60);
+          --search-focus-light: rgba(255, 255, 255, 0.04);
+          
+          /* Futuristic ambient background glows */
+          --ambient-1: rgba(45, 212, 191, 0.04);  /* Subtle teal glow */
+          --ambient-2: rgba(139, 92, 246, 0.04);  /* Subtle violet glow */
+          
+          /* Decorative elements */
+          --sparkle-fill: #818cf8;   /* Soft indigo */
+        }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { height: 100%; }
+
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #0f0f13;
-      color: #e8e8f0;
+      font-family: 'DM Sans', 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
       min-height: 100vh;
       padding: 2.5rem 1rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 25% 15%, var(--ambient-1) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 85%, var(--ambient-2) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
     }
 
     .container {
-      max-width: 680px;
+      max-width: 660px;
       margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     /* ── Header ── */
@@ -29,102 +123,192 @@
       gap: .75rem;
       margin-bottom: 2rem;
     }
+
     .lb-header h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: #fff;
-      letter-spacing: -.02em;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 7px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
-    .lb-header h1 .trophy { font-size: 28px; }
-    .lb-subtitle { font-size: 13px; color: #7c7c99; margin-top: 4px; }
-    .lb-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 
+    .lb-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .lb-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    /* ── Live Badge ── */
     .live-badge {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #34d399;
-      background: rgba(52,211,153,.1);
-      border: 1px solid rgba(52,211,153,.2);
-      border-radius: 20px;
-      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border-radius: 50px;
+      padding: 6px 14px;
+      box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
     }
-    .live-badge.error { color: #f87171; background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.2); }
+
+    .live-badge.error { color: var(--err-color); }
+
     .live-dot {
-      width: 6px; height: 6px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: currentColor;
+      background: var(--live-dot);
       animation: pulse 2s infinite;
     }
+
+    .live-badge.error .live-dot { background: var(--live-dot-err); }
+
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
-    .countdown { font-size: 11px; color: #7c7c99; }
+
+    .countdown {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
 
     /* ── Podium ── */
     .podium {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 1.5rem;
     }
+
     .podium-card {
-      border-radius: 12px;
-      padding: 1.1rem .75rem;
+      border-radius: 24px;
+      padding: 1.25rem .75rem;
       text-align: center;
-      border: 1px solid #2e2e40;
-      background: #161620;
+      background: var(--surface);
+      box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
     }
+
     .podium-card.top-1 {
-      background: #1e1a07;
-      border-color: #6b500f;
+      box-shadow:
+        10px 10px 20px var(--shadow-dark),
+        -10px -10px 20px var(--shadow-light),
+        inset 0 0 0 1px rgba(255,255,255,0.1);
     }
-    .podium-medal { font-size: 24px; display: block; margin-bottom: 6px; }
+
+    .podium-medal { font-size: 22px; display: block; margin-bottom: 8px; }
+
     .podium-name {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
-      color: #e8e8f0;
+      color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      letter-spacing: .5px;
     }
-    .podium-elo { font-size: 20px; font-weight: 700; margin-top: 5px; }
-    .top-1 .podium-elo { color: #f4c542; }
-    .top-2 .podium-elo { color: #b0bec5; }
-    .top-3 .podium-elo { color: #c97c3e; }
-    .podium-label { font-size: 10px; color: #7c7c99; margin-top: 3px; text-transform: uppercase; letter-spacing: .06em; }
+
+    .podium-elo { font-size: 22px; font-weight: 700; margin-top: 6px; color: var(--text-primary); letter-spacing: -.5px; }
+    .top-1 .podium-elo { color: var(--elo-1); }
+    .top-2 .podium-elo { color: var(--elo-2); }
+    .top-3 .podium-elo { color: var(--elo-3); }
+
+    .podium-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+    }
+
+    /* ── Search Bar ── */
+    .search-wrap {
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--text-muted);
+    }
+
+    #search-input {
+      width: 100%;
+      padding: 14px 18px 14px 44px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: .3px;
+      color: var(--text-primary);
+      background: var(--surface);
+      border: none;
+      border-radius: 18px;
+      outline: none;
+      box-shadow:
+        inset 5px 5px 10px var(--search-inset-dark),
+        inset -5px -5px 10px var(--search-inset-light);
+      transition: box-shadow .2s ease;
+      -webkit-appearance: none;
+    }
+
+    #search-input::placeholder { color: var(--text-muted); }
+
+    #search-input:focus {
+      box-shadow:
+        inset 6px 6px 12px var(--search-focus-dark),
+        inset -6px -6px 12px var(--search-focus-light);
+    }
 
     /* ── Table ── */
     .table-wrap {
-      background: #161620;
-      border: 1px solid #2e2e40;
-      border-radius: 12px;
+      background: var(--surface);
+      border-radius: 24px;
       overflow: hidden;
+      box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
     }
+
     table { width: 100%; border-collapse: collapse; }
+
     thead th {
-      font-size: 11px;
-      font-weight: 500;
-      color: #7c7c99;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: .08em;
-      padding: 12px 16px;
+      letter-spacing: .1em;
+      padding: 14px 18px;
       text-align: left;
-      border-bottom: 1px solid #2e2e40;
+      border-bottom: 1px solid var(--table-divider);
     }
+
     thead th:last-child { text-align: right; }
-    tbody tr + tr { border-top: 1px solid #1e1e2a; }
+
+    tbody tr + tr { border-top: 1px solid var(--table-row-divider); }
     tbody tr { transition: background .12s; }
-    tbody tr:hover { background: rgba(255,255,255,.03); }
-    td { padding: 14px 16px; font-size: 14px; color: #e8e8f0; vertical-align: middle; }
-    td.rank { width: 52px; font-size: 12px; font-weight: 500; color: #7c7c99; }
-    td.name { font-weight: 500; }
-    td.elo { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: #a5b4fc; }
-    td.state { text-align: center; color: #7c7c99; padding: 36px; font-size: 14px; }
-    td.state.err { color: #f87171; }
+    tbody tr:hover { background: var(--table-hover); }
+
+    td { padding: 14px 18px; font-size: 14px; color: var(--text-primary); vertical-align: middle; }
+    td.rank { width: 52px; font-size: 12px; font-weight: 500; color: var(--text-muted); }
+    td.name { font-weight: 500; color: var(--text-secondary); }
+    td.elo { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text-primary); }
+    td.state { text-align: center; color: var(--text-muted); padding: 36px; font-size: 14px; }
+    td.state.err { color: var(--err-color); }
 
     /* ── Footer ── */
     .footer-row {
@@ -133,50 +317,132 @@
       align-items: center;
       margin-top: 1.25rem;
     }
-    .back-btn {
+
+    .back-btn, .refresh-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 13px;
-      color: #7c7c99;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
       text-decoration: none;
-      border: 1px solid #2e2e40;
-      border-radius: 8px;
-      padding: 8px 14px;
-      transition: color .15s, border-color .15s;
-    }
-    .back-btn:hover { color: #e8e8f0; border-color: #4a4a6a; }
-    .refresh-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: #7c7c99;
-      background: none;
-      border: 1px solid #2e2e40;
-      border-radius: 8px;
-      padding: 8px 14px;
+      background: var(--surface);
+      border: none;
+      border-radius: 50px;
+      padding: 12px 22px;
       cursor: pointer;
-      font-family: inherit;
-      transition: color .15s, border-color .15s;
+      font-family: 'DM Sans', sans-serif;
+      box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+      transition: transform .2s ease, box-shadow .2s ease;
+      will-change: transform;
     }
-    .refresh-btn:hover { color: #e8e8f0; border-color: #4a4a6a; }
+
+    .back-btn:hover, .refresh-btn:hover {
+      box-shadow:
+        inset 4px 4px 8px rgba(0,0,0,0.10),
+        inset -4px -4px 8px rgba(255,255,255,0.28);
+      transform: scale(0.98);
+    }
+
+    .back-btn:active, .refresh-btn:active { transform: scale(0.94); }
+
     .refresh-btn svg { transition: transform .45s ease; }
     .refresh-btn.spinning svg { transform: rotate(360deg); }
 
+    /* ── Sparkle ── */
+    .sparkle {
+      position: fixed;
+      bottom: 28px;
+      right: 32px;
+      width: 22px;
+      height: 22px;
+      opacity: 0.25;
+      animation: sparkle-twinkle 4s ease-in-out infinite;
+    }
+
+    .sparkle svg { fill: var(--sparkle-fill); }
+
+    @keyframes sparkle-twinkle {
+      0%,100% { opacity: 0.15; transform: scale(1) rotate(0deg); }
+      50%      { opacity: 0.35; transform: scale(1.1) rotate(15deg); }
+    }
+
+    /* ── Dark Mode Toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: var(--surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+      transition: transform .2s ease, box-shadow .2s ease;
+      color: var(--text-muted);
+    }
+
+    .theme-toggle:hover {
+      box-shadow:
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+      transform: scale(0.96);
+    }
+
+    .theme-toggle:active { transform: scale(0.91); }
+
+    .theme-toggle .icon-sun  { display: none; }
+    .theme-toggle .icon-moon { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+    [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
     @media (max-width: 420px) {
-      .podium-elo { font-size: 16px; }
-      .podium-name { font-size: 11px; }
+      .podium-elo  { font-size: 16px; }
+      .podium-name { font-size: 10px; }
       .podium-medal { font-size: 20px; }
+      .back-btn, .refresh-btn { padding: 10px 16px; font-size: 10px; letter-spacing: 2px; }
     }
   </style>
 </head>
 <body>
+  <!-- Dark mode toggle -->
+  <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
+    <!-- Moon (shown in light mode) -->
+    <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+    <!-- Sun (shown in dark mode) -->
+    <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
   <div class="container">
 
+    <!-- Header -->
     <div class="lb-header">
       <div>
-        <h1><span class="trophy">🏆</span> Global Leaderboard</h1>
+        <h1>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#7a736c" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L14.59 9.41L24 12L14.59 14.59L12 22L9.41 14.59L0 12L9.41 9.41Z"/>
+          </svg>
+          Global Leaderboard
+        </h1>
         <p class="lb-subtitle">Rankings updated in real time</p>
       </div>
       <div class="lb-meta">
@@ -187,34 +453,45 @@
       </div>
     </div>
 
+    <!-- Podium (shown when data loads) -->
     <div class="podium" id="podium" style="display:none">
       <div class="podium-card top-2">
         <span class="podium-medal">🥈</span>
         <div class="podium-name" id="pod-2-name">—</div>
-        <div class="podium-elo" id="pod-2-elo">—</div>
+        <div class="podium-elo"  id="pod-2-elo">—</div>
         <div class="podium-label">2nd place</div>
       </div>
       <div class="podium-card top-1">
         <span class="podium-medal">🥇</span>
         <div class="podium-name" id="pod-1-name">—</div>
-        <div class="podium-elo" id="pod-1-elo">—</div>
+        <div class="podium-elo"  id="pod-1-elo">—</div>
         <div class="podium-label">1st place</div>
       </div>
       <div class="podium-card top-3">
         <span class="podium-medal">🥉</span>
         <div class="podium-name" id="pod-3-name">—</div>
-        <div class="podium-elo" id="pod-3-elo">—</div>
+        <div class="podium-elo"  id="pod-3-elo">—</div>
         <div class="podium-label">3rd place</div>
       </div>
     </div>
 
+    <!-- Search -->
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="6.5" cy="6.5" r="5"/>
+        <path d="M10.5 10.5L14 14"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="Search player..." autocomplete="off" spellcheck="false" />
+    </div>
+
+    <!-- Table -->
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
             <th>Rank</th>
             <th>Player</th>
-            <th>ELO rating</th>
+            <th style="text-align:right">ELO rating</th>
           </tr>
         </thead>
         <tbody id="leaderboard-body">
@@ -223,15 +500,16 @@
       </table>
     </div>
 
+    <!-- Footer -->
     <div class="footer-row">
       <a href="/lobby" class="back-btn">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10 12L6 8l4-4"/>
         </svg>
         Back to lobby
       </a>
       <button class="refresh-btn" id="refresh-btn" onclick="manualRefresh()">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/>
           <polyline points="10 1 13.5 3.07 10 5.5"/>
         </svg>
@@ -241,6 +519,87 @@
 
   </div>
 
+  <!-- Decorative sparkle -->
+  <div class="sparkle">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z"/>
+    </svg>
+  </div>
+
+  <script>
+    /* ── Debounce utility ── */
+    function debounce(func, delay) {
+      let timeoutId;
+      return function(...args) {
+        const context = this;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func.apply(context, args);
+        }, delay);
+      };
+    }
+
+    /* ── State ── */
+    let allPlayers = [];          // full data from last successful fetch
+    let currentQuery = "";        // latest search query
+
+    /* ── Search filter & render ── */
+    function renderFiltered(query) {
+      currentQuery = query.trim().toLowerCase();
+      const tbody = document.getElementById("leaderboard-body");
+
+      const filtered = currentQuery
+        ? allPlayers.filter(p => p.name.toLowerCase().includes(currentQuery))
+        : allPlayers;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="state">No players match "${query.trim()}".</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((p, i) => {
+        // Use global rank (index in allPlayers) so it never renumbers on search
+        const rank  = allPlayers.indexOf(p) + 1;
+        const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
+        return `<tr>
+          <td class="rank">${medal}</td>
+          <td class="name">${p.name}</td>
+          <td class="elo">${p.elo_rating.toLocaleString()}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    /* ── Debounced search handler ── */
+    const handleSearch = debounce(function(query) {
+      renderFiltered(query);
+    }, 300);
+
+    document.getElementById("search-input").addEventListener("input", function(e) {
+      handleSearch(e.target.value);
+    });
+  </script>
+
+  <!-- Dark mode toggle script -->
+  <script>
+    (function() {
+      const root = document.documentElement;
+      const btn  = document.getElementById("theme-toggle");
+      const saved = localStorage.getItem("lb-theme");
+      if (saved === "dark") root.setAttribute("data-theme", "dark");
+      btn.addEventListener("click", () => {
+        const isDark = root.getAttribute("data-theme") === "dark";
+        if (isDark) {
+          root.removeAttribute("data-theme");
+          localStorage.setItem("lb-theme", "light");
+        } else {
+          root.setAttribute("data-theme", "dark");
+          localStorage.setItem("lb-theme", "dark");
+        }
+      });
+    })();
+  </script>
+
+  <!-- Existing leaderboard JS (loadLeaderboard, startCountdown, manualRefresh) -->
   <script src="/static/js/leaderboard.js"></script>
 </body>
 </html>

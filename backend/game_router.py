@@ -110,6 +110,11 @@ class GameRoom:
             new_elo_opp = calculate_elo(elo_opp,elo_curr,1-actual_score)
 
             await update_elo(self.players_uids[curr_player],new_elo_curr,self.players_uids[opp_player],new_elo_opp)
+
+            # Record match in history
+            winner = self.players_uids[curr_player] if self.status.startswith("win_") else None
+            result_type = "win" if self.status.startswith("win_") else "draw"
+            await record_match(self.players_uids["X"], self.players_uids["O"], winner, result_type)
             
             await self.broadcast_state()
             await cleanup_room(self.room_id)
@@ -194,6 +199,9 @@ class GameRoom:
         new_elo_disconnected = calculate_elo(elo_disconnected,elo_remaining,0)
 
         await update_elo(self.players_uids[remaining_player],new_elo_remaining,self.players_uids[disconnected_player],new_elo_disconnected)
+
+        # Record forfeit match in history
+        await record_match(self.players_uids["X"], self.players_uids["O"], self.players_uids[remaining_player], "forfeit")
         
         try:
             payload = {
@@ -266,6 +274,16 @@ def calculate_elo(rating_player, rating_opponent, actual_score, k_factor=32):
     expected_score = 1 / (1 + 10 ** ((rating_opponent - rating_player) / 400))
     new_rating = rating_player + k_factor * (actual_score - expected_score)
     return round(new_rating)
+
+async def record_match(player1_uid, player2_uid, winner_uid, result_type):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        "INSERT INTO match_history (player1_uid, player2_uid, winner_uid, result_type) VALUES (?, ?, ?, ?)",
+        (player1_uid, player2_uid, winner_uid, result_type)
+    )
+    db.commit()
+    db.close()
 
 
 @router.websocket("/ws/game/{room_id}")

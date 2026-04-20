@@ -29,6 +29,17 @@ cursor.execute("""
         )
 """)
 
+cursor.execute("""
+        CREATE TABLE IF NOT EXISTS match_history (
+        match_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        player1_uid   TEXT,
+        player2_uid   TEXT,
+        winner_uid    TEXT,   
+        result_type   TEXT, 
+        timestamp     DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+""")
+
 
 
 

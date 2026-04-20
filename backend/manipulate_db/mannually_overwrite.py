@@ -17,6 +17,11 @@ def overwrite():
     SET room_id = -1
     """)
     
+    cursor.execute("""
+    UPDATE users
+    SET is_online = 0
+    """)
+    
     #include in final
     # cursor.execute("""
     # UPDATE users

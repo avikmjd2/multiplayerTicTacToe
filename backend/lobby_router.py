@@ -100,6 +100,13 @@ class Lobby:
             return
         
         if(self.active_connections[opp_socket]["room_id"]!=None):
+            ask_payload = {
+                "type":"ask",
+                "opp_uid": "0000",
+                "opp_name": "Currently_Busy",
+                "elo_rating" :elo_rate            
+            }
+            await mySocket.send_json(ask_payload)
             return
         db = get_db()
         cursor = db.cursor()

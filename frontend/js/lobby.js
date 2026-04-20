@@ -94,7 +94,12 @@ function connectToLobby(){
 
 
 function ask(data)
-{    
+{   
+    if(data.opp_uid==="0000" && data.opp_name==="Currently_Busy")
+    {
+        systemMsg.innerText = "Player Currently Engaged in a Challenge. Please Try Again Later."
+        return;
+    }
     challengePrompt.style.display = 'flex';
     challengePrompt.querySelector('.player-name').textContent = data.opp_name;
     challengePrompt.querySelector('.challenger-avatar').textContent = data.opp_name.substr(0,1);

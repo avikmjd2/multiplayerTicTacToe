@@ -61,6 +61,14 @@ class GameRoom:
 
     async def process_move(self,uid:str,row:int,col:int):
 
+        # Validate row/col types (could be None, str, float from JSON)
+        if not isinstance(row, int) or not isinstance(col, int):
+            return
+
+        # Validate row/col bounds
+        if row not in (0, 1, 2) or col not in (0, 1, 2):
+            return
+
         # Whose uid is this ie X or Y
         curr_player = None
         for player, player_uid in self.players_uids.items():
@@ -157,8 +165,20 @@ class GameRoom:
             
         if disconnected_player == "SPECTATOR":
             return
+
+        # Decrement player count on disconnect
+        self.count_of_players = max(0, self.count_of_players - 1)
+
+        # Remove disconnected player's socket
+        if disconnected_player in self.players:
+            del self.players[disconnected_player]
             
         if self.status.startswith("win_") or self.status == "draw" or self.status.startswith("forfeit_"):
+            return
+
+        # If the game hadn't started yet, just clean up without Elo changes
+        if self.status == "waiting":
+            await cleanup_room(self.room_id)
             return
         
         if disconnected_player == "X":
@@ -194,6 +214,15 @@ class GameRoom:
         
 
 async def cleanup_room(room_id):
+    # Close any remaining WebSocket connections in the room
+    if room_id in active_games:
+        room = active_games[room_id]
+        for symbol, ws in list(room.players.items()):
+            try:
+                await ws.close()
+            except Exception:
+                pass
+
     # Person 3's deleteRoom handles:
     # - Setting both players' room_id back to -1 in DB
     # - Deleting the room row from the room table
@@ -286,6 +315,11 @@ async def game_endpoint(websocket: WebSocket, room_id: str):
                 await room.process_move(uid, row, col)
 
     except WebSocketDisconnect:
+        if room_id in active_games:
+            await room.handle_disconnect(uid)
+    except Exception:
+        # Catch any unexpected errors (malformed JSON, etc.) so the
+        # game room is cleaned up instead of leaving a zombie connection
         if room_id in active_games:
             await room.handle_disconnect(uid)
 

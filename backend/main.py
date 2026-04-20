@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from manipulate_db.mannually_overwrite import overwrite as sqlite_overwrite
 import os
 from leaderboard_router import router as leaderboard_router
+from validator import initCache
 
 
 load_dotenv()
@@ -33,6 +34,10 @@ app.add_middleware(
 
 app.mount("/static",StaticFiles(directory="../frontend/"),name="static")
 
+
+@app.on_event("startup")
+async def startup():
+    initCache()
 
 @app.get("/")
 def root():

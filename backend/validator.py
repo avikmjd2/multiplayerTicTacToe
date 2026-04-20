@@ -5,7 +5,8 @@ import numpy as np
 cacheBuilt = False
 cache = {}
 
-def validate(toCheckImg:str):
+
+def initCache():
     global cacheBuilt, cache
     if not cacheBuilt:
         try:
@@ -20,9 +21,10 @@ def validate(toCheckImg:str):
         except Exception as e:
             print(f"Building Cache failed: {e}")
             return(0)
-        
-    
-    
-    nearestUID = find_closest_match(toCheckImg,cache)
-    
+
+def validate(toCheckImg:str):
+    global cacheBuilt, cache     
+    if not cacheBuilt: 
+        initCache()
+    nearestUID = find_closest_match(toCheckImg,cache)    
     return(nearestUID)        

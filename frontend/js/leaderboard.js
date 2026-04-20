@@ -3,29 +3,35 @@ let secondsLeft = INTERVAL;
 let countdownTimer = null;
 
 async function loadLeaderboard() {
-  const tbody = document.getElementById("leaderboard-body");
   try {
     const res = await fetch("/api/leaderboard");
     if (!res.ok) throw new Error("Failed to fetch");
     const players = await res.json();
-    console.log(players);
-    if (players.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="3" class="loading">No players yet.</td></tr>`;
-      return;
+
+    allPlayers = players;         // hand data to the search layer
+    renderFiltered(currentQuery); // re-render respecting any active query
+
+    // Update podium
+    if (players.length >= 1) {
+      document.getElementById("pod-1-name").textContent = players[0].name;
+      document.getElementById("pod-1-elo").textContent  = players[0].elo_rating.toLocaleString();
     }
-    tbody.innerHTML = players.map((p, i) => {
-      const rank = i + 1;
-      const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
-      const rowClass = rank <= 3 ? `top-${rank}` : "";
-      return `<tr class="${rowClass}">
-        <td class="rank">${medal}</td>
-        <td class="name">${p.name}</td>
-        <td class="elo">${p.elo_rating.toLocaleString()}</td>
-      </tr>`;
-    }).join("");
+    if (players.length >= 2) {
+      document.getElementById("pod-2-name").textContent = players[1].name;
+      document.getElementById("pod-2-elo").textContent  = players[1].elo_rating.toLocaleString();
+    }
+    if (players.length >= 3) {
+      document.getElementById("pod-3-name").textContent = players[2].name;
+      document.getElementById("pod-3-elo").textContent  = players[2].elo_rating.toLocaleString();
+    }
+    if (players.length >= 3) {
+      document.getElementById("podium").style.display = "grid";
+    }
+
     document.querySelector(".live-badge").classList.remove("error");
   } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="3" class="error">Failed to load leaderboard.</td></tr>`;
+    const tbody = document.getElementById("leaderboard-body");
+    tbody.innerHTML = `<tr><td colspan="3" class="state err">Failed to load leaderboard.</td></tr>`;
     document.querySelector(".live-badge").classList.add("error");
   }
 }
@@ -42,6 +48,14 @@ function startCountdown() {
       loadLeaderboard();
     }
   }, 1000);
+}
+
+function manualRefresh() {
+  const btn = document.getElementById("refresh-btn");
+  btn.classList.add("spinning");
+  setTimeout(() => btn.classList.remove("spinning"), 450);
+  loadLeaderboard();
+  startCountdown();
 }
 
 loadLeaderboard();

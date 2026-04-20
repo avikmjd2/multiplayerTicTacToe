@@ -6,4 +6,5 @@ logic.md
 uv.lock
 database.db.old
 database.dbuv.lock
+*.db
 

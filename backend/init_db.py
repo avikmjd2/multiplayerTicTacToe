@@ -40,7 +40,8 @@ cursor.execute("""
         )
 """)
 
-
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_player1 ON match_history(player1_uid)")
+cursor.execute("CREATE INDEX IF NOT EXISTS idx_player2 ON match_history(player2_uid)")
 
 
 

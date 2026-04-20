@@ -46,7 +46,7 @@ async function registerUser(img, username, password) {
         updateStatus("> REGISTRATION_SUCCESS: IDENTITY_STORED");
         
         setTimeout(() => {
-            window.location.href = "/login.html"; 
+            window.location.href = "/login"; 
         }, 2000);
 
     } catch (err) {

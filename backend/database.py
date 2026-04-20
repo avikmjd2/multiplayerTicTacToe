@@ -6,7 +6,7 @@ from pymongo import MongoClient
 load_dotenv()
 
 
-DB_PATH = os.getenv("DB_PATH", "./arena.db")
+DB_PATH = os.getenv("DB_PATH", "./database.db")
 MONGO_URL = os.getenv("MONGO_URL")
 
 _mongo_client = None

@@ -5,6 +5,7 @@ import base64
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from database import get_db
+from facial_recognition_module import get_face_encoding
 
 load_dotenv()
 
@@ -44,6 +45,10 @@ def scrape():
                     
                     # encode the image into utf-8 characters
                     image_data = base64.b64encode(response.content).decode("utf-8")
+                    img_encoding = get_face_encoding(image_data)
+                    # print(img_encoding)
+                    # print(img_encoding.tolist())
+                    
 
 
                 except Exception as e:
@@ -67,7 +72,7 @@ def scrape():
                 try:
                     image_collection.update_one(
                         {"uid": uid},
-                        {"$set": {"uid": uid, "image": image_data}},
+                        {"$set": {"uid": uid, "image": image_data, "encoding":img_encoding.tolist() if img_encoding is not None else None}},
                         upsert=True
                     )
                 except Exception as e:

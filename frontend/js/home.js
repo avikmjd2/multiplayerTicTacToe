@@ -22,19 +22,40 @@ async function fetchIdentity() {
             return;
         }
 
-        data.recent_matches.forEach(match => {
-            const color = match.outcome === "Win" ? "var(--success)"
-                : match.outcome === "Loss" ? "var(--danger)"
-                    : "var(--accent)";
+        // Build W/L/D summary strip
+        const wins = data.recent_matches.filter(m => m.outcome === "Win").length;
+        const losses = data.recent_matches.filter(m => m.outcome === "Loss").length;
+        const draws = data.recent_matches.filter(m => m.outcome === "Draw").length;
+
+        const strip = document.createElement("div");
+        strip.className = "match-summary-strip";
+        strip.innerHTML = `
+            <span class="summary-chip s-win"><span>${wins}W</span></span>
+            <span class="summary-chip s-loss"><span>${losses}L</span></span>
+            <span class="summary-chip s-draw"><span>${draws}D</span></span>
+        `;
+        logContainer.appendChild(strip);
+
+        data.recent_matches.forEach((match, i) => {
+            const badgeClass = match.outcome === "Win" ? "badge-win"
+                : match.outcome === "Loss" ? "badge-loss"
+                    : "badge-draw";
             const label = match.outcome.toUpperCase();
             const time = new Date(match.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const isForfeit = match.result_type === "forfeit";
 
             const item = document.createElement("div");
             item.classList.add("log-item");
+            item.style.animationDelay = `${i * 0.05}s`;
             item.innerHTML = `
-                <span style="color: var(--text-3)">[${time}]</span>
-                <span>vs ${match.opponent_name}</span>
-                <span style="color: ${color}">${label}</span>
+                <div class="log-left">
+                    <span class="log-time">${time}</span>
+                    <span class="log-opponent">vs ${match.opponent_name}</span>
+                </div>
+                <div class="log-right">
+                    ${isForfeit ? '<span class="log-type">FORFEIT</span>' : ''}
+                    <span class="log-badge ${badgeClass}">${label}</span>
+                </div>
             `;
             logContainer.appendChild(item);
         });

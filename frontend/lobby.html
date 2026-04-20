@@ -9,49 +9,49 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
         rel="stylesheet">
     <style>
-        /* ── Neumorphic Clay Design System (matches leaderboard & game) ── */
+        /* ── Modern Obsidian & Pearl Design System ── */
         :root {
-            --bg: #c8c2b8;
-            --surface: #c2bbb1;
-            --text-primary: #3d3835;
-            --text-secondary: #5e5750;
-            --text-muted: #7a736c;
-            --shadow-dark: rgba(0, 0, 0, 0.15);
-            --shadow-light: rgba(255, 255, 255, 0.42);
-            --accent: #a07c38;
-            --accent-dim: rgba(160, 124, 56, 0.12);
-            --success: #6b9e6b;
-            --success-dim: rgba(107, 158, 107, 0.15);
-            --danger: #a0695a;
-            --danger-dim: rgba(160, 105, 90, 0.15);
-            --ambient-1: rgba(255, 255, 255, 0.18);
-            --ambient-2: rgba(0, 0, 0, 0.06);
-            --sparkle-fill: #7a736c;
-            --search-inset-dark: rgba(0, 0, 0, 0.10);
-            --search-inset-light: rgba(255, 255, 255, 0.30);
-            --overlay-bg: rgba(180, 174, 164, 0.6);
+            --bg: #ebeef2; /* Pearl/Ice White */
+            --surface: #ebeef2;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --shadow-dark: rgba(180, 190, 205, 0.7);
+            --shadow-light: rgba(255, 255, 255, 1);
+            --accent: #3b82f6; /* Electric Blue Accent */
+            --accent-dim: rgba(59, 130, 246, 0.15);
+            --success: #10b981;
+            --success-dim: rgba(16, 185, 129, 0.15);
+            --danger: #ef4444; 
+            --danger-dim: rgba(239, 68, 68, 0.15);
+            --ambient-1: rgba(59, 130, 246, 0.06); /* Soft blue aura */
+            --ambient-2: rgba(0, 0, 0, 0.02);
+            --sparkle-fill: #94a3b8;
+            --search-inset-dark: rgba(180, 190, 205, 0.5);
+            --search-inset-light: rgba(255, 255, 255, 0.9);
+            --overlay-bg: rgba(235, 238, 242, 0.6);
         }
 
         [data-theme="dark"] {
-            --bg: #0f111a;
-            --surface: #171a23;
-            --text-primary: #e2eaf4;
-            --text-secondary: #94a3b8;
+            --bg: #13141a; /* Deep Matte Obsidian */
+            --surface: #13141a;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
             --text-muted: #475569;
-            --shadow-dark: rgba(0, 0, 0, 0.55);
-            --shadow-light: rgba(255, 255, 255, 0.02);
-            --accent: #fcd34d;
-            --accent-dim: rgba(252, 211, 77, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.85);
+            --shadow-light: rgba(255, 255, 255, 0.03);
+            --accent: #eab308; /* Vibrant Gold Accent */
+            --accent-dim: rgba(234, 179, 8, 0.1);
             --success: #2dd4bf;
             --success-dim: rgba(45, 212, 191, 0.1);
             --danger: #fb7185;
             --danger-dim: rgba(251, 113, 133, 0.1);
-            --ambient-1: rgba(45, 212, 191, 0.04);
+            --ambient-1: rgba(234, 179, 8, 0.04); /* Soft gold aura */
             --ambient-2: rgba(139, 92, 246, 0.04);
-            --sparkle-fill: #818cf8;
-            --search-inset-dark: rgba(0, 0, 0, 0.45);
+            --sparkle-fill: #eab308;
+            --search-inset-dark: rgba(0, 0, 0, 0.9);
             --search-inset-light: rgba(255, 255, 255, 0.02);
-            --overlay-bg: rgba(15, 17, 26, 0.7);
+            --overlay-bg: rgba(19, 20, 26, 0.8);
         }
 
         *,
@@ -381,21 +381,39 @@
         }
 
         .chat-preview {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'JetBrains Mono', monospace; /* Switched to coding font */
             font-size: 13px;
             font-weight: 500;
-            letter-spacing: .3px;
-            color: var(--text-muted);
+            color: var(--accent); /* Now uses vibrant theme accent */
             flex: 1;
             padding: 14px 18px;
-            background: var(--surface);
-            border: none;
-            border-radius: 18px;
+            background: var(--bg);
+            border: 1px solid var(--accent-dim);
+            border-radius: 12px;
             margin-right: 24px;
+            /* Inset shadow plus dynamic outer glow */
             box-shadow:
-                inset 5px 5px 10px var(--search-inset-dark),
-                inset -5px -5px 10px var(--search-inset-light);
-            transition: opacity 0.2s ease;
+                inset 3px 3px 6px var(--search-inset-dark),
+                inset -3px -3px 6px var(--search-inset-light),
+                0 0 12px var(--accent-dim);
+            transition: all 0.3s ease;
+            position: relative;
+            letter-spacing: 0.5px;
+        }
+
+        /* Typewriter Blinking Cursor Effect */
+        .chat-preview::after {
+            content: '█';
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+            color: var(--accent);
+            opacity: 0.8;
+            font-size: 12px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0; }
         }
 
         .ready-btn {
@@ -776,14 +794,10 @@
         </div>
     </div>
 
+    <script src="/static/js/navbar.js"></script>
     <script src="/static/js/lobby.js"></script>
 
-    <!-- Decorative sparkle -->
-    <div class="sparkle">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41Z" />
-        </svg>
-    </div>
+
 
     <!-- Dark mode toggle script -->
     <script>

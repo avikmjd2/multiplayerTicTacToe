@@ -27,4 +27,5 @@ def get_leaderboard():
         for row in rows
     ]
 
+    conn.close()
     return JSONResponse(result)

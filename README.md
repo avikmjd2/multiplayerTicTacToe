@@ -30,7 +30,7 @@ A full-stack, real-time multiplayer Tic-Tac-Toe web application with biometric (
 | Real-time Comms | WebSockets (FastAPI native) |
 | Facial Recognition | `face-recognition` library (black-box module) |
 | Frontend | Vanilla HTML / CSS / JavaScript |
-| Package Manager | `uv` |
+| Package Manager | `uv` , `conda`|
 | Session Management | Starlette `SessionMiddleware` (server-side, cookie-backed) |
 
 ---
@@ -135,7 +135,7 @@ Each document in the `images` collection has the following shape:
 {
     "uid": "<student-uid>",
     "image": "<Base64-encoded profile image>",
-    "encoding": [<128-dimensional face encoding array>]
+    "encoding": [<128-dimensional face encoding array>] //optional mostly for testing purposes, not strictly required by the spec but speeds up login matching
 }
 ```
 
@@ -178,14 +178,21 @@ MONGO_URL=<your-mongodb-atlas-connection-string>
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-github-classroom-repo-url>
+git clone https://github.com/CS6201/project-kernel-panic
 cd project-kernel-panic
 ```
 
 ### 2. Install Dependencies
-
+For uv
 ```bash
 uv sync
+```
+
+For conda
+```bash
+conda create -n project_env python=3.11 -y
+conda activate project_env
+uv pip install -r pyproject.toml
 ```
 
 This reads `pyproject.toml` and installs all dependencies (including `face-recognition`, `numpy`, `Pillow`, `fastapi`, `uvicorn`, `pymongo`, etc.) into the managed virtual environment.
@@ -207,7 +214,8 @@ This creates `database.db` with the `users` and `room` tables.
 
 ```bash
 cd backend
-uv run python scraper.py
+uv run python scraper.py #for uv
+python scraper.py #for conda
 ```
 
 The scraper iterates through `batch_data.csv` and for each student:
@@ -227,7 +235,8 @@ From the **`backend/`** directory:
 
 ```bash
 cd backend
-uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000 #for uv
+uvicorn main:app --reload --host #for conda
 ```
 
 The application will be available at **`http://localhost:8000`**.
@@ -314,9 +323,40 @@ The application will be available at **`http://localhost:8000`**.
 
 ## LLM Usage
 
-> *Insert screenshots of all LLM interactions (prompts and outputs) as a separate PDF here. The screenshots must clearly show the model used (e.g. GitHub Copilot, Gemini, ChatGPT free tier). Paid services such as a Claude subscription are not permitted.*
+Below are the screenshots documenting the LLM interactions (prompts and outputs) used during the project development:
 
-<!-- Attach llm_usage.pdf to the repository root -->
+### Interface & Logic Iterations
+![Interaction 1](screenshots/Screenshot%20From%202026-04-20%2016-38-51.png)
+![Interaction 2](screenshots/Screenshot%20From%202026-04-20%2016-39-00.png)
+![Interaction 3](screenshots/Screenshot%20From%202026-04-20%2016-39-11.png)
+![Interaction 4](screenshots/Screenshot%20From%202026-04-20%2016-39-16.png)
+![Interaction 5](screenshots/Screenshot%20From%202026-04-20%2016-39-42.png)
+![Interaction 6](screenshots/Screenshot%20From%202026-04-20%2016-39-47.png)
+![Interaction 7](screenshots/Screenshot%20From%202026-04-20%2016-39-54.png)
+![Interaction 8](screenshots/Screenshot%20From%202026-04-20%2016-39-59.png)
+![Interaction 9](screenshots/Screenshot%20From%202026-04-20%2016-40-10.png)
+![Interaction 10](screenshots/Screenshot%20From%202026-04-20%2016-40-15.png)
+![Interaction 11](screenshots/Screenshot%20From%202026-04-20%2016-40-20.png)
+![Interaction 12](screenshots/Screenshot%20From%202026-04-20%2016-40-33.png)
+![Interaction 13](screenshots/Screenshot%20From%202026-04-20%2016-40-38.png)
+![Interaction 14](screenshots/Screenshot%20From%202026-04-20%2016-40-45.png)
+![Interaction 15](screenshots/Screenshot%20From%202026-04-20%2016-40-51.png)
+![Interaction 16](screenshots/Screenshot%20From%202026-04-20%2017-01-23.png)
+![Interaction 17](screenshots/Screenshot%20From%202026-04-20%2017-01-27.png)
+![Interaction 18](screenshots/Screenshot%20From%202026-04-20%2017-01-30.png)
+![Interaction 19](screenshots/Screenshot%20From%202026-04-20%2017-01-34.png)
+![Interaction 20](screenshots/Screenshot%20From%202026-04-20%2017-01-37.png)
+![Interaction 21](screenshots/Screenshot%20From%202026-04-20%2017-01-43.png)
+![Interaction 22](screenshots/Screenshot%20From%202026-04-20%2017-01-46.png)
+![Interaction 23](screenshots/Screenshot%20From%202026-04-20%2017-01-49.png)
+![Interaction 24](screenshots/Screenshot%20From%202026-04-20%2017-01-56.png)
+![Milestone 1](screenshots/k1.jpeg)
+![Milestone 2](screenshots/k2.jpeg)
+![Milestone 3](screenshots/k3.jpeg)
+![Architecural Iteration 1](screenshots/A.png)
+![Architecural Iteration 2](screenshots/A2.png)
+![Architecural Iteration 3](screenshots/A3.png)
+![Architecural Iteration 4](screenshots/A4.png)
 
 ---
 

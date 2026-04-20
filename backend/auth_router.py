@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from database import get_db,get_mongo_db
 from bson import ObjectId
+# import validator
 from validator import validate
 import sqlite3
 import uuid

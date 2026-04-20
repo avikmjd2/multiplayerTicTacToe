@@ -104,7 +104,7 @@ class Lobby:
                 "type":"ask",
                 "opp_uid": "0000",
                 "opp_name": "Currently_Busy",
-                "elo_rating" :elo_rate            
+                "elo_rating" :"Not Available"            
             }
             await mySocket.send_json(ask_payload)
             return

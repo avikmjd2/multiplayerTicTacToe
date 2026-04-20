@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 from database import get_db,get_mongo_db
 from bson import ObjectId
 from validator import validate
+import sqlite3
 import uuid
 
 router = APIRouter(prefix='/auth')
@@ -149,8 +150,64 @@ def whoami(request:Request):
     return {"uid": uid, "name": request.session.get("name")}
 
 
+
+async def get_recent_matches(uid: str):
+    db = get_db()
+    cursor = db.cursor()
+    
+    query = """
+        SELECT 
+            player1_uid, 
+            player2_uid, 
+            winner_uid, 
+            result_type, 
+            timestamp,
+            COUNT(*) OVER() as total_count
+        FROM match_history 
+        WHERE player1_uid = ? OR player2_uid = ?
+        ORDER BY timestamp DESC
+        LIMIT 10
+    """
+    
+    rows = cursor.execute(query, (uid, uid)).fetchall()
+    db.close()
+
+    if not rows:
+        return {"total_played": 0, "recent_matches": []}
+
+    total_played = rows[0]["total_count"] if isinstance(rows[0], sqlite3.Row) else rows[0][5]
+    
+    match_data = []
+    for row in rows:
+        p1, p2, winner, res_type, timestamp, _ = row
+        
+        
+        opponent_uid = p2 if p1 == uid else p1
+        
+        if res_type == "draw":
+            outcome = "Draw"
+        elif winner == uid:
+            outcome = "Win"
+        else:
+            outcome = "Loss"
+            
+        match_data.append({
+            "opponent_uid": opponent_uid,
+            "outcome": outcome,
+            "result_type": res_type, 
+            "timestamp": timestamp
+        })
+
+    return {
+        "total_played": total_played,
+        "recent_matches": match_data
+    }
+
+
+
+
 @router.get("/compdata")
-def getInfo(request:Request):
+async def getInfo(request:Request):
         
     uid = request.session.get("uid")
     if not uid:
@@ -164,13 +221,28 @@ def getInfo(request:Request):
     ).fetchone()
     
     if not user:
-        logout()
+        db.close()
         raise HTTPException(status_code=401, detail="Invalid User")
     
-    elo_rate = user["elo_rating"];
+    elo_rate = user["elo_rating"]
     if not elo_rate:
         elo_rate = "error"
     
+    match_result = await get_recent_matches(uid)
     
-    return {"uid": uid, "name": request.session.get("name"),"elo": elo_rate}
+    for match in match_result["recent_matches"]:
+        opp = cursor.execute(
+            "SELECT name FROM users WHERE uid = ?", (match["opponent_uid"],)
+        ).fetchone()
+        match["opponent_name"] = opp["name"] if opp else "Unknown"
+    
+    db.close()
+    
+    return {
+        "uid": uid, 
+        "name": request.session.get("name"),
+        "elo": elo_rate,
+        "total_played": match_result["total_played"],
+        "recent_matches": match_result["recent_matches"]
+    }
 

@@ -207,21 +207,16 @@
                 <span class="stat-value" id="elo-val">1,450</span>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Matches Won</span>
-                <span class="stat-value">24</span>
+                <span class="stat-label">Matches Played</span>
+                <span class="stat-value" id="matches-val">0</span>
             </div>
 
             <div class="activity-log">
                 <h3>System Logs // Recent Activity</h3>
-                <div class="log-item">
-                    <span style="color: var(--text-3)">[14:20]</span>
-                    <span>Biometric Authentication Success</span>
-                    <span style="color: var(--success)">VALIDATED</span>
-                </div>
-                <div class="log-item">
-                    <span style="color: var(--text-3)">[12:05]</span>
-                    <span>Game Session vs User_882</span>
-                    <span style="color: var(--accent)">VICTORY</span>
+                <div id="match-log">
+                    <div class="log-item">
+                        <span style="color: var(--text-3)">Loading...</span>
+                    </div>
                 </div>
             </div>
         </main>
@@ -232,40 +227,6 @@
         </footer>
     </div>
 
-    <script>
-        //TODO: GOOD HOME PAGE NEEDED. COMPLETE SCRIPT.
-        async function fetchIdentity() {
-            try {
-                const res = await fetch("/auth/compdata");
-                if(!res.ok) {
-                    window.location.href = "/login";
-                    return;
-                }
-                const data = await res.json();
-                
-                document.getElementById("greeting").textContent = `Welcome back, ${data.name}`;
-                document.getElementById("subtext").textContent = `ID: ${data.uid.substring(0,12)}...`;
-                document.getElementById("elo-val").textContent = data.elo;
-            } catch (err) {
-                console.warn("Server unreachable.");
-                document.getElementById("greeting").textContent = "Connection Lost";
-            }
-        }
-
-        function enterLobby() {
-            window.location.href = "/lobby"; // Redirects to your Game Lobby page
-        }
-
-        async function logout() {
-            try {
-                await fetch("/auth/logout", { method: "POST" });
-                window.location.href = "/login";
-            } catch (e) {
-                window.location.href = "/login";
-            }
-        }
-
-        fetchIdentity();
-    </script>
+    <script src="/static/js/home.js"></script>
 </body>
 </html>

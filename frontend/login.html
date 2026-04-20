@@ -5,31 +5,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arena :: Biometric Login</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap"
         rel="stylesheet">
     <style>
+        /* ── Neumorphic Clay Design System (matches leaderboard & game) ── */
         :root {
-            --bg: #0a0a0a;
-            --surface: #141414;
-            --surface-2: #1e1e1e;
-            --surface-3: #2a2a2a;
-            --border: rgba(255, 255, 255, 0.08);
-            --border-hover: rgba(255, 255, 255, 0.16);
-            --accent: #eab308;
-            --accent-dim: rgba(234, 179, 8, 0.1);
-            --success: #22c55e;
-            --text: #f8fafc;
-            --text-2: #94a3b8;
-            --text-3: #64748b;
-            --ff-body: 'DM Sans', sans-serif;
-            --ff-mono: 'JetBrains Mono', monospace;
-            --r-sm: 8px;
-            --r-md: 12px;
-            --r-lg: 16px;
-            --r-xl: 24px;
+            --bg: #c8c2b8;
+            --surface: #c2bbb1;
+            --text-primary: #3d3835;
+            --text-secondary: #5e5750;
+            --text-muted: #7a736c;
+            --shadow-dark: rgba(0, 0, 0, 0.15);
+            --shadow-light: rgba(255, 255, 255, 0.42);
+            --accent: #a07c38;
+            --accent-dim: rgba(160, 124, 56, 0.15);
+            --err-color: #a0695a;
+            --ambient-1: rgba(255, 255, 255, 0.18);
+            --ambient-2: rgba(0, 0, 0, 0.06);
+            --sparkle-fill: #7a736c;
+            --search-inset-dark: rgba(0, 0, 0, 0.10);
+            --search-inset-light: rgba(255, 255, 255, 0.30);
+            --scan-color: #a07c38;
+            --scan-glow: rgba(160, 124, 56, 0.5);
+            --target-border: rgba(160, 124, 56, 0.3);
+            --target-bg-start: rgba(160, 124, 56, 0.05);
+            --loader-border: #c2bbb1;
+            --loader-top: #7a736c;
+            --overlay-bg: rgba(180, 174, 164, 0.6);
+            --overlay-text: #3d3835;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f111a;
+            --surface: #171a23;
+            --text-primary: #e2eaf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #475569;
+            --shadow-dark: rgba(0, 0, 0, 0.55);
+            --shadow-light: rgba(255, 255, 255, 0.02);
+            --accent: #fcd34d;
+            --accent-dim: rgba(252, 211, 77, 0.1);
+            --err-color: #f43f5e;
+            --ambient-1: rgba(45, 212, 191, 0.04);
+            --ambient-2: rgba(139, 92, 246, 0.04);
+            --sparkle-fill: #818cf8;
+            --search-inset-dark: rgba(0, 0, 0, 0.45);
+            --search-inset-light: rgba(255, 255, 255, 0.02);
+            --scan-color: #fcd34d;
+            --scan-glow: rgba(252, 211, 77, 0.4);
+            --target-border: rgba(252, 211, 77, 0.3);
+            --target-bg-start: rgba(252, 211, 77, 0.05);
+            --loader-border: #2a2f3a;
+            --loader-top: #94a3b8;
+            --overlay-bg: rgba(15, 17, 26, 0.7);
+            --overlay-text: #e2eaf4;
         }
 
         * {
@@ -38,34 +68,51 @@
             padding: 0;
         }
 
+        html,
         body {
-            font-family: var(--ff-body);
-            background-color: var(--bg);
-            background-image:
-                linear-gradient(var(--border) 1px, transparent 1px),
-                linear-gradient(90deg, var(--border) 1px, transparent 1px);
-            background-size: 60px 60px;
-            background-position: center center;
-            color: var(--text);
+            height: 100%;
+        }
+
+        body {
+            font-family: 'DM Sans', 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 24px;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Main Glassmorphism Card matching the Lobby */
+        /* Ambient lighting overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 25% 15%, var(--ambient-1) 0%, transparent 55%),
+                radial-gradient(ellipse at 75% 85%, var(--ambient-2) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Card ── */
         .login-card {
-            background: rgba(20, 20, 20, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            border-radius: var(--r-xl);
+            position: relative;
+            z-index: 1;
+            background: var(--surface);
+            border-radius: 30px;
             padding: 40px;
             width: 100%;
             max-width: 480px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow:
+                14px 14px 28px var(--shadow-dark),
+                -14px -14px 28px var(--shadow-light),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06);
             text-align: center;
             animation: cardRise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
             display: flex;
@@ -85,51 +132,52 @@
             }
         }
 
+        /* ── Header ── */
         .header-section {
             margin-bottom: 8px;
         }
 
         h2 {
-            font-size: 28px;
+            font-size: 12px;
             font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.5px;
+            letter-spacing: 7px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
             margin-bottom: 8px;
         }
 
         .subtitle {
-            color: var(--text-3);
-            font-family: var(--ff-mono);
-            font-size: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 1px;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
         }
 
-        /* Camera Viewport Area */
+        /* ── Camera Viewport ── */
         .camera-box {
             width: 100%;
             aspect-ratio: 4 / 3;
-            background: var(--bg);
-            border-radius: var(--r-lg);
-            border: 1px solid var(--border);
+            background: var(--surface);
+            border-radius: 22px;
+            border: none;
             position: relative;
             overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+            box-shadow:
+                inset 7px 7px 14px rgba(0, 0, 0, 0.11),
+                inset -7px -7px 14px rgba(255, 255, 255, 0.32);
         }
 
-        /* The actual video feed */
         #videoFeed {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
-            /* Mirror effect for natural feel */
             opacity: 0.9;
-            /* Slight dim to match dark theme */
         }
 
-        /* Scanning HUD Overlay */
+        /* ── HUD Overlay ── */
         .hud-overlay {
             position: absolute;
             top: 0;
@@ -139,15 +187,15 @@
             pointer-events: none;
             box-sizing: border-box;
             border: 2px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--r-lg);
+            border-radius: 22px;
         }
 
         .scan-bar {
             position: absolute;
             width: 100%;
             height: 2px;
-            background: var(--accent);
-            box-shadow: 0 0 15px var(--accent);
+            background: var(--scan-color);
+            box-shadow: 0 0 15px var(--scan-glow);
             top: 0;
             animation: scanLoop 3s ease-in-out infinite;
             opacity: 0.8;
@@ -176,21 +224,21 @@
             transform: translate(-50%, -50%);
             width: 50%;
             height: 60%;
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            /* Subtle accent color */
-            border-radius: var(--r-md);
-            background: linear-gradient(to bottom, rgba(234, 179, 8, 0.05), transparent 20%, transparent 80%, rgba(234, 179, 8, 0.05));
+            border: 1px solid var(--target-border);
+            border-radius: 12px;
+            background: linear-gradient(to bottom,
+                    var(--target-bg-start), transparent 20%,
+                    transparent 80%, var(--target-bg-start));
         }
 
-        /* Corner brackets for the target box */
         .target-box::before,
         .target-box::after {
             content: '';
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 2px solid var(--accent);
-            border-radius: var(--r-md);
+            border: 2px solid var(--scan-color);
+            border-radius: 12px;
             opacity: 0.5;
         }
 
@@ -206,8 +254,7 @@
             right: -2px;
         }
 
-
-        /* Control Buttons */
+        /* ── Buttons ── */
         .btn-container {
             display: flex;
             flex-direction: column;
@@ -215,114 +262,266 @@
         }
 
         button {
-            padding: 14px;
-            border-radius: var(--r-md);
-            font-size: 14px;
-            font-weight: 700;
+            padding: 14px 28px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s ease;
-            font-family: var(--ff-body);
+            letter-spacing: 3px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-family: 'DM Sans', sans-serif;
+            border-radius: 50px;
+            will-change: transform;
         }
 
-        /* Matches the 'Initialize Ready' button from Lobby */
         .primary-btn {
-            background: var(--text);
-            color: var(--bg);
+            background: var(--surface);
+            color: var(--text-primary);
             border: none;
+            box-shadow:
+                7px 7px 14px var(--shadow-dark),
+                -7px -7px 14px var(--shadow-light),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.06);
         }
 
         .primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(255, 255, 255, 0.1);
+            box-shadow:
+                inset 5px 5px 10px rgba(0, 0, 0, 0.10),
+                inset -5px -5px 10px rgba(255, 255, 255, 0.28);
+            transform: scale(0.98);
         }
 
-        /* Matches the 'Decline' button from Lobby */
+        .primary-btn:active {
+            transform: scale(0.94);
+        }
+
         .secondary-btn {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-secondary);
+            border: none;
+            box-shadow:
+                6px 6px 12px var(--shadow-dark),
+                -6px -6px 12px var(--shadow-light);
         }
 
         .secondary-btn:hover {
-            background: var(--surface-3);
-            border-color: var(--text-3);
+            box-shadow:
+                inset 4px 4px 8px rgba(0, 0, 0, 0.10),
+                inset -4px -4px 8px rgba(255, 255, 255, 0.28);
+            transform: scale(0.98);
         }
 
-        /* Hidden Canvas for Capture Logic */
+        .secondary-btn:active {
+            transform: scale(0.94);
+        }
+
+        /* ── Hidden Canvas ── */
         #captureCanvas {
             display: none;
         }
 
-        /* Status Indicator (Matches the lobby's chat-preview box) */
+        /* ── Status Bar ── */
         .status-bar {
-            font-family: var(--ff-mono);
+            font-family: 'DM Sans', sans-serif;
             font-size: 13px;
-            color: var(--text-2);
-            padding: 14px 16px;
+            font-weight: 500;
+            letter-spacing: .3px;
+            color: var(--text-muted);
+            padding: 14px 18px;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--r-md);
+            border: none;
+            border-radius: 18px;
             text-align: left;
+            box-shadow:
+                inset 5px 5px 10px var(--search-inset-dark),
+                inset -5px -5px 10px var(--search-inset-light);
         }
 
+        /* ── Loading Overlay ── */
         #loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-
+            background: var(--overlay-bg);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
             display: flex;
             justify-content: center;
             align-items: center;
-
             z-index: 9999;
-
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease;
-            }
+        }
 
-            #loading-overlay.active {
+        #loading-overlay.active {
             opacity: 1;
             visibility: visible;
-            }
+        }
 
-            /* Spinner */
-            .loader {
+        .loader {
             width: 50px;
             height: 50px;
-            border: 5px solid #ddd;
-            border-top: 5px solid #3498db;
+            border: 5px solid var(--loader-border);
+            border-top: 5px solid var(--loader-top);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            }
+        }
 
-            /* Bottom text */
-            #loading-text {
+        #loading-text {
             position: absolute;
             bottom: 40px;
             width: 100%;
             text-align: center;
-            color: #fff;
-            font-size: 16px;
+            color: var(--overlay-text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 1px;
             opacity: 0.9;
-            }
+        }
 
-            @keyframes spin {
+        @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
+        }
+
+        /* ── Dark Mode Toggle ── */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--surface);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+            transition: transform .2s ease, box-shadow .2s ease;
+            color: var(--text-muted);
+            padding: 0;
+            letter-spacing: 0;
+            text-transform: none;
+            font-size: 0;
+        }
+
+        .theme-toggle:hover {
+            box-shadow:
+                inset 3px 3px 6px var(--shadow-dark),
+                inset -3px -3px 6px var(--shadow-light);
+            transform: scale(0.96);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.91);
+        }
+
+        .theme-toggle .icon-sun {
+            display: none;
+        }
+
+        .theme-toggle .icon-moon {
+            display: block;
+        }
+
+        [data-theme="dark"] .theme-toggle .icon-sun {
+            display: block;
+        }
+
+        [data-theme="dark"] .theme-toggle .icon-moon {
+            display: none;
+        }
+
+        /* ── Decorative Sparkle ── */
+        .sparkle {
+            position: fixed;
+            bottom: 28px;
+            right: 32px;
+            width: 22px;
+            height: 22px;
+            opacity: 0.25;
+            animation: sparkle-twinkle 4s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        .sparkle svg {
+            fill: var(--sparkle-fill);
+        }
+
+        @keyframes sparkle-twinkle {
+
+            0%,
+            100% {
+                opacity: 0.15;
+                transform: scale(1) rotate(0deg);
             }
+
+            50% {
+                opacity: 0.35;
+                transform: scale(1.1) rotate(15deg);
+            }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 520px) {
+            .login-card {
+                padding: 28px 20px;
+                border-radius: 24px;
+            }
+
+            h2 {
+                font-size: 11px;
+                letter-spacing: 5px;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 11px;
+                letter-spacing: 2px;
+            }
+
+            .camera-box {
+                border-radius: 18px;
+            }
+
+            .hud-overlay {
+                border-radius: 18px;
+            }
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- Dark mode toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">
+        <!-- Moon (shown in light mode) -->
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+        <!-- Sun (shown in dark mode) -->
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+    </button>
 
     <div class="login-card">
 
@@ -357,6 +556,33 @@
         <div class="loader"></div>
         <p id="loading-text">Logging in...</p>
     </div>
+
+    <!-- Decorative sparkle -->
+    <div class="sparkle">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 gto24L9.41 14.59L0 12L9.41 9.41Z" />
+        </svg>
+    </div>
+
+    <!-- Dark mode toggle script -->
+    <script>
+        (function () {
+            const root = document.documentElement;
+            const btn = document.getElementById("theme-toggle");
+            const saved = localStorage.getItem("lb-theme");
+            if (saved === "dark") root.setAttribute("data-theme", "dark");
+            btn.addEventListener("click", () => {
+                const isDark = root.getAttribute("data-theme") === "dark";
+                if (isDark) {
+                    root.removeAttribute("data-theme");
+                    localStorage.setItem("lb-theme", "light");
+                } else {
+                    root.setAttribute("data-theme", "dark");
+                    localStorage.setItem("lb-theme", "dark");
+                }
+            });
+        })();
+    </script>
 
 </body>
 

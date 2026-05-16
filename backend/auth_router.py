@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 from database import get_db,get_mongo_db
 from bson import ObjectId
 from validator import validate
+from facial_recognition_module import get_face_encoding
 import uuid
 
 router = APIRouter(prefix='/auth')
@@ -62,8 +63,7 @@ def register(payload: RegisterPayload):
         db.close()
         raise HTTPException(status_code=500, detail=f"Failed to save user info: {e}")
     
-    new_item = newItem(uid=user_uuid, image=payload.image)
-    item_dict = new_item.model_dump(by_alias=True)
+    img_encoding = get_face_encoding(payload.image)
     
     try:
         client = get_mongo_db()
@@ -73,14 +73,24 @@ def register(payload: RegisterPayload):
         mongo_db = client["user"]
         collection = mongo_db["images"]
         
-        collection.insert_one(item_dict)
-    except:
+        collection.insert_one({
+            "uid": user_uuid,
+            "image": payload.image,
+            "encoding": img_encoding if img_encoding is not None else None
+        })
+    except HTTPException:
         cursor.execute("DELETE FROM users WHERE uid = %s",(user_uuid,))
         db.commit()
-        raise HTTPException(status_code=500, detail="Image save failed. Registration reverted.")
-    finally:
         db.close()
+        raise
+    except Exception:
+        db.rollback()
+        cursor.execute("DELETE FROM users WHERE uid = %s",(user_uuid,))
+        db.commit()
+        db.close()
+        raise HTTPException(status_code=500, detail="Image save failed. Registration reverted.")
     
+    db.close()
     return {"message": "Registered successfully"}
 
 

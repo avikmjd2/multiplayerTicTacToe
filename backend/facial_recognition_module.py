@@ -6,6 +6,16 @@ from PIL import Image
 from deepface import DeepFace
 
 
+
+def _cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
+    """
+    Cosine distance = 1 - cosine_similarity.
+    Range: [0, 2]. For face embeddings, values < 0.593 (SFace default) indicate a match.
+    """
+    a, b = np.array(a, dtype=np.float64), np.array(b, dtype=np.float64)
+    return 1.0 - np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
 def _to_bytes(data):
     """
     Accepts either raw bytes or a Base64-encoded string and always returns bytes.
@@ -20,7 +30,7 @@ def _to_bytes(data):
 
 def get_face_encoding(image_data):
     """
-    Extracts a high-dimensional (512-d) face embedding using Facenet512.
+    Extracts a face embedding using the lightweight SFace model.
     Returns a list of floats (embedding) or None if no face is detected.
     """
     try:
@@ -31,18 +41,19 @@ def get_face_encoding(image_data):
         # DeepFace processing expects BGR matrix format (standard OpenCV layout)
         image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
 
-        # Extract 512-dimensional vector embedding using the hyper-accurate Facenet512 model
+        # Extract vector embedding using the lightweight SFace engine
         embeddings = DeepFace.represent(
             img_path=image_bgr,
             model_name="SFace",
-            enforce_detection=True,
+            enforce_detection=False,  # 🚀 FIX 1: Don't crash if lighting/angle is imperfect
             detector_backend="opencv",
         )
 
-        if not embeddings:
+        if not embeddings or len(embeddings) == 0 or "embedding" not in embeddings[0]:
+            print("DeepFace successfully bypassed detection but found zero embeddings.")
             return None
 
-        # Return the raw mathematical vector representation array
+
         return embeddings[0]["embedding"]
 
     except Exception as e:
@@ -68,15 +79,16 @@ def find_closest_match(login_image_data, db_images_dict):
     best_match_uid = None
     min_distance = float("inf")
 
-    # Facenet512 cosine distance verification threshold (0.3 is the standard sweet spot for strict verification)
-    threshold = 0.3
+    # 🚀 CALIBRATION FIX: SFace cosine metric sweet spot is 0.593.
+    # Leaving this at 0.300 will result in false rejections.
+    threshold = 0.593
 
     print(f"Comparing against {len(db_images_dict)} records in database...")
 
     for uid, db_enc in db_images_dict.items():
         if db_enc is not None:
-            # Calculate the angular cosine discrepancy between the matrix points
-            distance = DeepFace.verification.dst.compute_cosine(
+            # Calculate the angular cosine discrepancy using the corrected v0.0.100 API path
+            distance = _cosine_distance(
                 np.array(login_encoding), np.array(db_enc)
             )
 

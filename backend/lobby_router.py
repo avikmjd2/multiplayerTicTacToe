@@ -12,14 +12,12 @@ class RoomPayload(BaseModel):
     
 class RoomSendPayload(BaseModel):
     room_id: int
-    
-
 
 
 class Lobby:
     def __init__(self):
         self.active_connections: dict[WebSocket, dict] ={}
-        self.uid_to_socket: dict[str, WebSocket] = {} #acts as a map 
+        self.uid_to_socket: dict[str, WebSocket] = {}
         
     async def connect(self,websocket:WebSocket, uid:str, username:str):
         await websocket.accept()
@@ -30,7 +28,6 @@ class Lobby:
                     await socketnum.close(code=1008)
                 except RuntimeError:
                     pass
-                
                 del self.active_connections[socketnum]
                 
             
@@ -49,15 +46,14 @@ class Lobby:
         if data:
             self.uid_to_socket.pop(data["uid"], None)
             db = get_db()
-            db.execute("UPDATE users SET is_online = 0 WHERE uid = ?", (data["uid"],))
+            cursor = db.cursor()
+            cursor.execute("UPDATE users SET is_online = 0 WHERE uid = %s", (data["uid"],))
             db.commit()
             db.close()
         
         await self.broadcast_presence()
             
     async def broadcast_presence(self):
-        # user_list = list(self.active_connections.values())
-
         user_list = [
                         {"uid": v["uid"], "name": v["name"], "is_ready": v["is_ready"], 
                         "in_game": v["room_id"] is not None}
@@ -69,21 +65,17 @@ class Lobby:
             "users": user_list
         }
         
-        
         connections = list(self.active_connections.keys())
         
         results = await asyncio.gather(
             *[conn.send_json(payload) for conn in connections], return_exceptions=True
         )
                     
-        
         for conn, result in zip(connections, results):
             if isinstance(result, Exception):
                 data =self.active_connections.pop(conn, None)
                 if data:
                     self.uid_to_socket.pop(data["uid"], None)
-                
-                
                 
             
     async def toggle_ready(self, websocket: WebSocket):
@@ -110,9 +102,10 @@ class Lobby:
             return
         db = get_db()
         cursor = db.cursor()
-        user = cursor.execute(
-            "SELECT * FROM users WHERE uid = ?", (my_uid,)
-        ).fetchone()
+        cursor.execute(
+            "SELECT * FROM users WHERE uid = %s", (my_uid,)
+        )
+        user = cursor.fetchone()
         
         elo_rate = user["elo_rating"];
         if not elo_rate:
@@ -177,25 +170,20 @@ class Lobby:
         if(not room):
             await opp_socket.send_json({"type":"challenge","room_id":"error"})
             await mySocket.send_json({"type":"challenge","room_id":"error"})
-            # print("I AM HERE1")
             await self.fallBack(mySocket,opp_socket)
         else:
             await mySocket.send_json({"type":"challenge","room_id":room})
             await opp_socket.send_json({"type":"challenge","room_id":room})
-            # print("I AM HERE")
             self.active_connections[opp_socket]["room_id"] = room
             self.active_connections[mySocket]["room_id"] = room
             await self.broadcast_presence()
     
-        
-
 
 lobby = Lobby()
 
 
 @router.websocket("/ws/lobby")
 async def lobby_endpoint(websocket:WebSocket):
-    # await websocket.accept()
     username = websocket.session.get("name","Unknown")
     uid = websocket.session.get("uid","none")
     if(uid=='none'):
@@ -206,13 +194,11 @@ async def lobby_endpoint(websocket:WebSocket):
     
     try:
         while True:
-            # await websocket.receive_text()
             data = await websocket.receive_json()
             if data.get("action") == "toggle_ready":
                 await lobby.toggle_ready(websocket)
             if data.get("action") == "non_ready":
                 await lobby.toggle_ready(websocket)
-                
                 
             if data.get("action") == "challenge_player":
                 await lobby.ask_challenge(websocket,opp_uid=data.get("opp_uid"),my_uid=uid)
@@ -220,7 +206,6 @@ async def lobby_endpoint(websocket:WebSocket):
             if data.get("action") == "accept_challenge":
                 await lobby.acceptChallenge(websocket,opp_uid=data.get("opp_uid"),my_uid=uid,status=data.get("accepted"))
 
-                
                 
     except WebSocketDisconnect:
         await lobby.disconnect(websocket=websocket)
@@ -233,7 +218,6 @@ async def lobby_endpoint(websocket:WebSocket):
 async def create_room(my_uid,opp_uid):
 
     if(not my_uid or not opp_uid):
-        # raise HTTPException(status_code=1008, detail="Not logged in or invalid uid")
         print(f"[DEBUG] create_room failed: my_uid={my_uid}, opp_uid={opp_uid}")
         return None
     
@@ -243,25 +227,25 @@ async def create_room(my_uid,opp_uid):
     db = get_db()
     cursor = db.cursor()
     
-    my_query = cursor.execute("SELECT room_id FROM users WHERE uid = ?",(my_uid,)).fetchone()
-    opp_query = cursor.execute("SELECT room_id FROM users WHERE uid = ?",(opp_uid,)).fetchone()
+    cursor.execute("SELECT room_id FROM users WHERE uid = %s",(my_uid,))
+    my_query = cursor.fetchone()
+    cursor.execute("SELECT room_id FROM users WHERE uid = %s",(opp_uid,))
+    opp_query = cursor.fetchone()
     
     print(f"[DEBUG] create_room: my_query={my_query}, my_query[0]={my_query[0] if my_query else 'None'}, opp_query={opp_query}, opp_query[0]={opp_query[0] if opp_query else 'None'}")
     
     if (my_query and my_query[0] != -1) or (opp_query and opp_query[0] != -1):
-        # raise HTTPException(status_code=401, detail="User already playing")
         print(f"[DEBUG] create_room failed: players already in a room")
         return None
     
     try:
-        cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(room_id,my_uid))
+        cursor.execute("UPDATE users SET room_id = %s WHERE uid = %s",(room_id,my_uid))
         if cursor.rowcount == 0:
             raise Exception(f"User {my_uid} not found in database")
-        cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(room_id,opp_uid))
+        cursor.execute("UPDATE users SET room_id = %s WHERE uid = %s",(room_id,opp_uid))
         
-        #TODO: Set data in room
         board_id = str(uuid.uuid4())
-        cursor.execute("INSERT INTO room (room_id,player1_uid,player2_uid,board_id) VALUES (?,?,?,?)",(room_id,my_uid,opp_uid,board_id))
+        cursor.execute("INSERT INTO room (room_id,player1_uid,player2_uid,board_id) VALUES (%s,%s,%s,%s)",(room_id,my_uid,opp_uid,board_id))
         if cursor.rowcount == 0:
             raise Exception(f"User {opp_uid} not found in database")
         
@@ -285,15 +269,16 @@ async def deleteRoom(id:int):
     db = get_db()
     cursor = db.cursor()
     try:
-        row = cursor.execute("SELECT player1_uid, player2_uid FROM room WHERE room_id = ?",(id,)).fetchone()         
+        cursor.execute("SELECT player1_uid, player2_uid FROM room WHERE room_id = %s",(id,))
+        row = cursor.fetchone()
         if not row:
             return
         uid_1,uid_2 = row
         if(uid_1): 
-            cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(-1,uid_1))
+            cursor.execute("UPDATE users SET room_id = %s WHERE uid = %s",(-1,uid_1))
         if(uid_2):
-            cursor.execute("UPDATE users SET room_id = ? WHERE uid = ?",(-1,uid_2))
-        cursor.execute("DELETE FROM room WHERE room_id = ?",(id,))
+            cursor.execute("UPDATE users SET room_id = %s WHERE uid = %s",(-1,uid_2))
+        cursor.execute("DELETE FROM room WHERE room_id = %s",(id,))
         await lobby.fallBackById(uid_1,uid_2)
         db.commit()
     except Exception as e:
@@ -301,7 +286,3 @@ async def deleteRoom(id:int):
         db.rollback()
     finally:
         db.close()
-    
-    
-    
-    

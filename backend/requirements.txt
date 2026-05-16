@@ -1,0 +1,17 @@
+fastapi[standard]
+uvicorn[standard]
+python-jose[cryptography]
+passlib[argon2]
+sqlalchemy
+python-multipart
+mysql-connector-python
+itsdangerous
+pymongo
+pymongo[srv]
+asyncio
+python-dotenv>=1.2.2
+requests>=2.33.1
+psycopg2-binary
+deepface
+opencv-python-headless
+tf-keras

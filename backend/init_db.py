@@ -1,12 +1,12 @@
-import sqlite3
-from dotenv import load_dotenv
 import os
+import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_PATH = os.getenv("DB_PATH","./database.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-conn = sqlite3.connect(DB_PATH)
+conn = psycopg2.connect(DATABASE_URL)
 cursor = conn.cursor()
 
 cursor.execute("""
@@ -16,13 +16,13 @@ cursor.execute("""
         password_hash TEXT,
         elo_rating    INTEGER DEFAULT 1200,
         is_online     INTEGER DEFAULT 0,
-        room_id       INTEGER DEFAULT -1           
+        room_id       BIGINT DEFAULT -1           
         )
 """)
 
 cursor.execute("""
         CREATE TABLE IF NOT EXISTS room (
-        room_id       INTEGER PRIMARY KEY,
+        room_id       BIGINT PRIMARY KEY,
         player1_uid   TEXT,
         player2_uid   TEXT,
         board_id      TEXT      
@@ -31,12 +31,12 @@ cursor.execute("""
 
 cursor.execute("""
         CREATE TABLE IF NOT EXISTS match_history (
-        match_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id      SERIAL PRIMARY KEY,
         player1_uid   TEXT,
         player2_uid   TEXT,
         winner_uid    TEXT,   
         result_type   TEXT, 
-        timestamp     DATETIME DEFAULT CURRENT_TIMESTAMP
+        timestamp     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
 """)
 

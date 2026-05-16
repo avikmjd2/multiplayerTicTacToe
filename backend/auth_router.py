@@ -3,9 +3,7 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from database import get_db,get_mongo_db
 from bson import ObjectId
-# import validator
 from validator import validate
-import sqlite3
 import uuid
 
 router = APIRouter(prefix='/auth')
@@ -30,8 +28,6 @@ class RegisterPayload(BaseModel):
     
     
 class LoginPayload(BaseModel):
-    # uid:str
-    # password:str
     image:str
     
     
@@ -51,21 +47,12 @@ def register(payload: RegisterPayload):
         raise HTTPException(status_code=400, detail="IMAGE already registered")
     
     
-    # existing = cursor.execute(
-    #     "SELECT uid FROM users WHERE uid = ?", (payload.uid,)
-    # ).fetchone()
-    
-    # if existing:
-    #     db.close()
-    #     raise HTTPException(status_code=400, detail="UID already registered")
-    
-    
     hashed = pwd_context.hash(payload.password)
     user_uuid = str(uuid.uuid4())
 
     try:
         cursor.execute(
-            "INSERT INTO users (uid, name, password_hash) VALUES (?, ?, ?)",
+            "INSERT INTO users (uid, name, password_hash) VALUES (%s, %s, %s)",
             (user_uuid, payload.name, hashed)
         )
         
@@ -88,7 +75,7 @@ def register(payload: RegisterPayload):
         
         collection.insert_one(item_dict)
     except:
-        cursor.execute("DELETE FROM users WHERE uid = ?",(user_uuid,))
+        cursor.execute("DELETE FROM users WHERE uid = %s",(user_uuid,))
         db.commit()
         raise HTTPException(status_code=500, detail="Image save failed. Registration reverted.")
     finally:
@@ -107,23 +94,23 @@ def login(payload:LoginPayload, request:Request):
     db=get_db()
     cursor = db.cursor()
     
-    user = cursor.execute(
-        "SELECT * FROM users WHERE uid = ?", (existing,)
-    ).fetchone()
+    cursor.execute(
+        "SELECT * FROM users WHERE uid = %s", (existing,)
+    )
+    user = cursor.fetchone()
 
     if not user:
         db.close()
         raise HTTPException(status_code=401, detail="Invalid User")
     
     cursor.execute(
-        "UPDATE users SET is_online = 1 WHERE uid = ?", (existing,)
+        "UPDATE users SET is_online = 1 WHERE uid = %s", (existing,)
     )
     
     db.commit()
     db.close()
     
     
-    #save session
     request.session["uid"] = existing
     request.session["name"] = user["name"]
     return {"message": "Login successful", "uid": existing, "name": user["name"]}
@@ -134,7 +121,8 @@ def logout(request: Request):
     uid = request.session.get("uid")
     if uid:
         db = get_db()
-        db.execute("UPDATE users SET is_online = 0 WHERE uid = ?", (uid,))
+        cursor = db.cursor()
+        cursor.execute("UPDATE users SET is_online = 0 WHERE uid = %s", (uid,))
         db.commit()
         db.close()
         
@@ -165,22 +153,27 @@ async def get_recent_matches(uid: str):
             timestamp,
             COUNT(*) OVER() as total_count
         FROM match_history 
-        WHERE player1_uid = ? OR player2_uid = ?
+        WHERE player1_uid = %s OR player2_uid = %s
         ORDER BY timestamp DESC
         LIMIT 10
     """
     
-    rows = cursor.execute(query, (uid, uid)).fetchall()
+    cursor.execute(query, (uid, uid))
+    rows = cursor.fetchall()
     db.close()
 
     if not rows:
         return {"total_played": 0, "recent_matches": []}
 
-    total_played = rows[0]["total_count"] if isinstance(rows[0], sqlite3.Row) else rows[0][5]
+    total_played = rows[0]["total_count"]
     
     match_data = []
     for row in rows:
-        p1, p2, winner, res_type, timestamp, _ = row
+        p1 = row["player1_uid"]
+        p2 = row["player2_uid"]
+        winner = row["winner_uid"]
+        res_type = row["result_type"]
+        timestamp = row["timestamp"]
         
         
         opponent_uid = p2 if p1 == uid else p1
@@ -196,7 +189,7 @@ async def get_recent_matches(uid: str):
             "opponent_uid": opponent_uid,
             "outcome": outcome,
             "result_type": res_type, 
-            "timestamp": timestamp
+            "timestamp": str(timestamp)
         })
 
     return {
@@ -217,9 +210,10 @@ async def getInfo(request:Request):
     db=get_db()
     cursor = db.cursor()
     
-    user = cursor.execute(
-        "SELECT * FROM users WHERE uid = ?", (uid,)
-    ).fetchone()
+    cursor.execute(
+        "SELECT * FROM users WHERE uid = %s", (uid,)
+    )
+    user = cursor.fetchone()
     
     if not user:
         db.close()
@@ -232,9 +226,10 @@ async def getInfo(request:Request):
     match_result = await get_recent_matches(uid)
     
     for match in match_result["recent_matches"]:
-        opp = cursor.execute(
-            "SELECT name FROM users WHERE uid = ?", (match["opponent_uid"],)
-        ).fetchone()
+        cursor.execute(
+            "SELECT name FROM users WHERE uid = %s", (match["opponent_uid"],)
+        )
+        opp = cursor.fetchone()
         match["opponent_name"] = opp["name"] if opp else "Unknown"
     
     db.close()

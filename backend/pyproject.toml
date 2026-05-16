@@ -1,0 +1,29 @@
+[project]
+name = "project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+
+requires-python = "==3.11.*"
+
+
+dependencies = [
+    "fastapi[standard]",
+    "uvicorn[standard]",
+    "python-jose[cryptography]",
+    "passlib[argon2]",
+    "sqlalchemy",
+    "python-multipart",
+    "mysql-connector-python",
+    "itsdangerous",
+    "pymongo",
+    "pymongo[srv]",
+    "asyncio",
+    "python-dotenv>=1.2.2",
+    "requests>=2.33.1",
+    "psycopg2-binary",
+    "deepface",
+    "opencv-python-headless",
+    "tf-keras",
+]
+

@@ -1,15 +1,15 @@
-import sqlite3
-from dotenv import load_dotenv
 import os
+import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_PATH = os.getenv("DB_PATH","./database.db")
 
 
 def overwrite():  
+    DATABASE_URL = os.getenv("DATABASE_URL")
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -21,12 +21,6 @@ def overwrite():
     UPDATE users
     SET is_online = 0
     """)
-    
-    #include in final
-    # cursor.execute("""
-    # UPDATE users
-    # SET is_online = 0
-    # """)
 
     conn.commit()
     conn.close()

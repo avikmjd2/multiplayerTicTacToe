@@ -5,102 +5,55 @@ from database import get_db
 router = APIRouter()
 
 active_games = {}
-# This is just a map of random string (room_id) to games
+
 
 class GameRoom:
     def __init__(self,room_id:str):
         self.room_id = room_id
-
-        self.board = [
-            ["","",""],
-            ["","",""],
-            ["","",""]
-        ]
-
-        # {"X" : <Websocket of Player 1> ,..}
+        self.board = [["","",""],["","",""],["","",""]]
         self.players: Dict[str, WebSocket] = {}
         self.players_uids = {}
         self.count_of_players = 0
-        self.current_turn = "X" # X or Y
-        self.status = "waiting" # waiting or playing or win_X/O or draw
-        self.win_line = None # list of [r,c] cells that form the winning line
+        self.current_turn = "X"
+        self.status = "waiting"
+        self.win_line = None
 
     async def connect(self, websocket: WebSocket, uid: str):
         await websocket.accept()
-
-        # First person to come is X
         if uid == self.players_uids["X"]:
             self.count_of_players += 1
             await websocket.send_json({"type":"init","symbol":"X"})
-
-        # if X is here already (ie second person or more)
         elif uid == self.players_uids["O"]:
             self.count_of_players += 1
             await websocket.send_json({"type":"init","symbol":"O"})
         else:
             await websocket.send_json({"type":"init","symbol":"SPECTATOR"})
-
         if self.count_of_players == 2:
             self.status = "playing"
-
         await self.broadcast_state()
 
     async def broadcast_state(self):
-        # Send whatevers the current board array to both X and O
-
-        payload = {
-            "type":"update",
-            "board":self.board,
-            "turn": self.current_turn,
-            "status": self.status,
-            "win_line": self.win_line
-        }
-        # self.players has X and O (both Players)
+        payload = {"type":"update","board":self.board,"turn":self.current_turn,"status":self.status,"win_line":self.win_line}
         for ws in self.players.values():
             await ws.send_json(payload)
 
     async def process_move(self,uid:str,row:int,col:int):
-
-        # Validate row/col types (could be None, str, float from JSON)
-        if not isinstance(row, int) or not isinstance(col, int):
-            return
-
-        # Validate row/col bounds
-        if row not in (0, 1, 2) or col not in (0, 1, 2):
-            return
-
-        # Whose uid is this ie X or Y
+        if not isinstance(row, int) or not isinstance(col, int): return
+        if row not in (0,1,2) or col not in (0,1,2): return
         curr_player = None
         for player, player_uid in self.players_uids.items():
-            if player_uid == uid:
-                curr_player = player
-        
-        # Validating current player
-        if curr_player is None: # neither X nor O (Spectator)
-            return
-        
-        if self.status != "playing": # Game not started or Over
-            return
-
-        if curr_player != self.current_turn: # Not curr_player's chance
-            return
-
-        # Validiating row and col
-        if self.board[row][col] != "": # Cell non empty
-            return
-
-        # Update the Board
+            if player_uid == uid: curr_player = player
+        if curr_player is None: return
+        if self.status != "playing": return
+        if curr_player != self.current_turn: return
+        if self.board[row][col] != "": return
         self.board[row][col] = curr_player
-
-        # Checking for Win or Draw
         win_cells = self.win_checker(curr_player)
         if win_cells:
             self.status = f"win_{curr_player}"
             self.win_line = win_cells
         elif self.draw_checker(curr_player):
             self.status = "draw"
-
-        # Inside process_move, after the win/draw check block:
         if self.status.startswith("win_") or self.status == "draw":
             elo_curr = await get_elo_player(self.players_uids[curr_player])
             opp_player = "X" if curr_player == "O" else "O"
@@ -108,169 +61,101 @@ class GameRoom:
             actual_score = 1.0 if self.status.startswith("win_") else 0.5
             new_elo_curr = calculate_elo(elo_curr,elo_opp,actual_score)
             new_elo_opp = calculate_elo(elo_opp,elo_curr,1-actual_score)
-
             await update_elo(self.players_uids[curr_player],new_elo_curr,self.players_uids[opp_player],new_elo_opp)
-
-            # Record match in history
             winner = self.players_uids[curr_player] if self.status.startswith("win_") else None
             result_type = "win" if self.status.startswith("win_") else "draw"
             await record_match(self.players_uids["X"], self.players_uids["O"], winner, result_type)
-            
             await self.broadcast_state()
             await cleanup_room(self.room_id)
             return
-
-
-        # Switch turns if neither win nor draw case
-        if self.current_turn == "X":
-            self.current_turn = "O"
-        else:
-            self.current_turn = "X"
-
+        if self.current_turn == "X": self.current_turn = "O"
+        else: self.current_turn = "X"
         await self.broadcast_state()
 
     def win_checker(self,curr_player):
-        # Checking all 3 rows
         for r in range(3):
-            if self.board[r][0] == curr_player and self.board[r][1] == curr_player and self.board[r][2] == curr_player:
+            if self.board[r][0]==curr_player and self.board[r][1]==curr_player and self.board[r][2]==curr_player:
                 return [[r,0],[r,1],[r,2]]
-
-        # Checking all 3 cols
         for c in range(3):
-            if self.board[0][c] == curr_player and self.board[1][c] == curr_player and self.board[2][c] == curr_player:
+            if self.board[0][c]==curr_player and self.board[1][c]==curr_player and self.board[2][c]==curr_player:
                 return [[0,c],[1,c],[2,c]]
-
-        # Checking Diagonals
-        if self.board[0][0] == curr_player and self.board[1][1] == curr_player and self.board[2][2] == curr_player:
+        if self.board[0][0]==curr_player and self.board[1][1]==curr_player and self.board[2][2]==curr_player:
             return [[0,0],[1,1],[2,2]]
-            
-        if self.board[0][2] == curr_player and self.board[1][1] == curr_player and self.board[2][0] == curr_player:
+        if self.board[0][2]==curr_player and self.board[1][1]==curr_player and self.board[2][0]==curr_player:
             return [[0,2],[1,1],[2,0]]
-        
         return None
-  
 
     def draw_checker(self,curr_player):
-        # if no box left means draw
         for r in range(3):
             for c in range(3):
-                if self.board[r][c] == "":
-                    return False
-        
-        return True   
+                if self.board[r][c] == "": return False
+        return True
 
     async def handle_disconnect(self, uid: str):
         disconnected_player = None
-        if self.players_uids.get("X") == uid:
-            disconnected_player = "X"
-        elif self.players_uids.get("O") == uid:
-            disconnected_player = "O"
-        else:
-            disconnected_player = "SPECTATOR"
-            
-        if disconnected_player == "SPECTATOR":
-            return
-
-        # Decrement player count on disconnect
+        if self.players_uids.get("X") == uid: disconnected_player = "X"
+        elif self.players_uids.get("O") == uid: disconnected_player = "O"
+        else: disconnected_player = "SPECTATOR"
+        if disconnected_player == "SPECTATOR": return
         self.count_of_players = max(0, self.count_of_players - 1)
-
-        # Remove disconnected player's socket
-        if disconnected_player in self.players:
-            del self.players[disconnected_player]
-            
-        if self.status.startswith("win_") or self.status == "draw" or self.status.startswith("forfeit_"):
-            return
-
-        # If the game hadn't started yet, just clean up without Elo changes
+        if disconnected_player in self.players: del self.players[disconnected_player]
+        if self.status.startswith("win_") or self.status == "draw" or self.status.startswith("forfeit_"): return
         if self.status == "waiting":
             await cleanup_room(self.room_id)
             return
-        
-        if disconnected_player == "X":
-            self.status = "forfeit_X"
-        elif disconnected_player == "O":
-            self.status = "forfeit_O"
-        
+        if disconnected_player == "X": self.status = "forfeit_X"
+        elif disconnected_player == "O": self.status = "forfeit_O"
         remaining_player = "O" if disconnected_player == "X" else "X"
-
         elo_remaining = await get_elo_player(self.players_uids[remaining_player])
         elo_disconnected = await get_elo_player(self.players_uids[disconnected_player])
         new_elo_remaining = calculate_elo(elo_remaining,elo_disconnected,1)
         new_elo_disconnected = calculate_elo(elo_disconnected,elo_remaining,0)
-
         await update_elo(self.players_uids[remaining_player],new_elo_remaining,self.players_uids[disconnected_player],new_elo_disconnected)
-
-        # Record forfeit match in history
         await record_match(self.players_uids["X"], self.players_uids["O"], self.players_uids[remaining_player], "forfeit")
-        
         try:
-            payload = {
-                "type": "update",
-                "board": self.board,
-                "turn": self.current_turn,
-                "status": self.status,
-                "win_line": self.win_line
-            }
-
+            payload = {"type":"update","board":self.board,"turn":self.current_turn,"status":self.status,"win_line":self.win_line}
             if remaining_player in self.players:
                 await self.players[remaining_player].send_json(payload)
-        
-        except:
-            pass
-
+        except: pass
         await cleanup_room(self.room_id)
-        
+
 
 async def cleanup_room(room_id):
-    # Close any remaining WebSocket connections in the room
     if room_id in active_games:
         room = active_games[room_id]
         for symbol, ws in list(room.players.items()):
-            try:
-                await ws.close()
-            except Exception:
-                pass
-
-    # Person 3's deleteRoom handles:
-    # - Setting both players' room_id back to -1 in DB
-    # - Deleting the room row from the room table
-    # - Calling lobby.fallBackById() so players reappear in lobby
+            try: await ws.close()
+            except Exception: pass
     from lobby_router import deleteRoom
     await deleteRoom(room_id)
-    
-    # Also remove from our in-memory dictionary
-    if room_id in active_games:
-        del active_games[room_id]   
+    if room_id in active_games: del active_games[room_id]
 
 async def get_elo_player(uid: str):
     db = get_db()
     cursor = db.cursor()
-    row = cursor.execute("SELECT elo_rating from users WHERE uid = ?",(uid,)).fetchone()
-
+    cursor.execute("SELECT elo_rating from users WHERE uid = %s",(uid,))
+    row = cursor.fetchone()
     db.close()
     return row[0] if row else 1200
 
 async def get_room_players(room_id: str):
     db = get_db()
     cursor = db.cursor()
-    row = cursor.execute("SELECT player1_uid, player2_uid from room WHERE room_id = ?",(room_id,)).fetchone()
-
+    cursor.execute("SELECT player1_uid, player2_uid from room WHERE room_id = %s",(room_id,))
+    row = cursor.fetchone()
     db.close()
     return row
 
 async def update_elo(uid1: int, elo1: int, uid2: int, elo2: int):
     db = get_db()
     cursor = db.cursor()
-    query = "UPDATE users SET elo_rating = ? WHERE uid = ?"
+    query = "UPDATE users SET elo_rating = %s WHERE uid = %s"
     cursor.execute(query, (elo1,uid1))
     cursor.execute(query, (elo2,uid2))
-    
     db.commit()
     db.close()
-    return
 
 def calculate_elo(rating_player, rating_opponent, actual_score, k_factor=32):
-    # actual_score: 1.0 for Win, 0.5 for Draw, 0.0 for Loss
     expected_score = 1 / (1 + 10 ** ((rating_opponent - rating_player) / 400))
     new_rating = rating_player + k_factor * (actual_score - expected_score)
     return round(new_rating)
@@ -279,7 +164,7 @@ async def record_match(player1_uid, player2_uid, winner_uid, result_type):
     db = get_db()
     cursor = db.cursor()
     cursor.execute(
-        "INSERT INTO match_history (player1_uid, player2_uid, winner_uid, result_type) VALUES (?, ?, ?, ?)",
+        "INSERT INTO match_history (player1_uid, player2_uid, winner_uid, result_type) VALUES (%s, %s, %s, %s)",
         (player1_uid, player2_uid, winner_uid, result_type)
     )
     db.commit()
@@ -288,57 +173,33 @@ async def record_match(player1_uid, player2_uid, winner_uid, result_type):
 
 @router.websocket("/ws/game/{room_id}")
 async def game_endpoint(websocket: WebSocket, room_id: str):
-    # First doing a security Check to Ensure user loggend in or not
-
     uid = websocket.session.get("uid")
     if not uid:
         await websocket.close(code=1008)
         return
-
-    # Checking if room exists, if DNE then create
-
     if room_id not in active_games:
         r = await get_room_players(room_id)
         if not r:
             await websocket.close(code=1008)
             return
         active_games[room_id] = GameRoom(room_id)
-
         active_games[room_id].players_uids["X"] = r[0]
         active_games[room_id].players_uids["O"] = r[1]
-    
     room = active_games[room_id]
-
-    if uid == room.players_uids.get("X"):
-        room.players["X"] = websocket
-    elif uid == room.players_uids.get("O"):
-        room.players["O"] = websocket 
+    if uid == room.players_uids.get("X"): room.players["X"] = websocket
+    elif uid == room.players_uids.get("O"): room.players["O"] = websocket
     else:
         await websocket.close(code=1008)
         return
-        
-    # Connecting the User
     await room.connect(websocket, uid)
-
     try:
-        # Look for incoming moves infinitely
         while True:
             data = await websocket.receive_json()
-
-            # Handling of the moves comes here
-
             if data.get("action") == "move" and room.status == "playing":
                 row = data.get("row")
                 col = data.get("col")
                 await room.process_move(uid, row, col)
-
     except WebSocketDisconnect:
-        if room_id in active_games:
-            await room.handle_disconnect(uid)
+        if room_id in active_games: await room.handle_disconnect(uid)
     except Exception:
-        # Catch any unexpected errors (malformed JSON, etc.) so the
-        # game room is cleaned up instead of leaving a zombie connection
-        if room_id in active_games:
-            await room.handle_disconnect(uid)
-
-
+        if room_id in active_games: await room.handle_disconnect(uid)

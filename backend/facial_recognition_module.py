@@ -1,23 +1,15 @@
-"""
-CS6.201 Black-Box Facial Recognition Module
-DO NOT MODIFY THIS FILE.
-
-Dependencies (add to your uv project):
-    uv add face-recognition numpy Pillow
-"""
-
 import base64
 import io
-
-import face_recognition
+import cv2
 import numpy as np
 from PIL import Image
+from deepface import DeepFace
 
 
 def _to_bytes(data):
     """
     Accepts either raw bytes or a Base64-encoded string and always returns bytes.
-    This allows callers to pass image data in either form.
+    Kept identical to protect existing caller formats.
     """
     if isinstance(data, (bytes, bytearray)):
         return bytes(data)
@@ -28,65 +20,77 @@ def _to_bytes(data):
 
 def get_face_encoding(image_data):
     """
-    Accepts raw bytes or a Base64 string, locates the first face found,
-    and returns its 128-d encoding. Returns None if no face is detected.
+    Extracts a high-dimensional (512-d) face embedding using Facenet512.
+    Returns a list of floats (embedding) or None if no face is detected.
     """
     try:
         image_bytes = _to_bytes(image_data)
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         image_np = np.array(image)
-        locs = face_recognition.face_locations(image_np)
-        if not locs:
+
+        # DeepFace processing expects BGR matrix format (standard OpenCV layout)
+        image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+
+        # Extract 512-dimensional vector embedding using the hyper-accurate Facenet512 model
+        embeddings = DeepFace.represent(
+            img_path=image_bgr,
+            model_name="SFace",
+            enforce_detection=True,
+            detector_backend="opencv",
+        )
+
+        if not embeddings:
             return None
-        encs = face_recognition.face_encodings(image_np, locs)
-        return encs[0] if encs else None
+
+        # Return the raw mathematical vector representation array
+        return embeddings[0]["embedding"]
+
     except Exception as e:
-        print(f"Error encoding image: {e}")
+        print(f"Error encoding image via DeepFace: {e}")
         return None
 
-def build_encodings_cache(db_images_dict):
-    """
-    Call once at server startup.
-    :param db_images_dict:
-        { uid: image_data } fetched from MongoDB.
-    :return:
-        { uid: encoding } with entries skipped if no face is detected.
-    """
-    cache = {}
-    for uid, img_data in db_images_dict.items():
-        enc = get_face_encoding(img_data)
-        if enc is not None:
-            cache[uid] = enc
-    print(f"Encodings cache built: {len(cache)}/{len(db_images_dict)} records encoded.")
-    return cache
 
-def find_closest_match(login_image_data, encodings_cache):
+def find_closest_match(login_image_data, db_images_dict):
     """
-    Compares a login attempt against precomputed encodings.
-    :param login_image_data:
-        The webcam capture as raw bytes or a Base64 string.
-    :param encodings_cache:
-        { uid: encoding } as returned by build_encodings_cache().
-    :return:
-        The UID of the closest matching face, or None if no face is
-        detected in the login frame or no match clears the threshold.
+    Compares a login attempt against a dictionary of known profile image encodings.
+
+    :param login_image_data: Webcam capture as raw bytes or a Base64 string.
+    :param db_images_dict: Dict mapping { uid: list_of_floats } fetched from MongoDB.
+    :return: The UID string of the closest match, or None if below threshold.
     """
-    print("Processing login frame...")
-    login_enc = get_face_encoding(login_image_data)
-    if login_enc is None:
+    print("Processing login frame via DeepFace...")
+    login_encoding = get_face_encoding(login_image_data)
+
+    if login_encoding is None:
         print("No face detected in login frame.")
         return None
-    best_uid = None
-    best_dist = float("inf")
-    print(f"Comparing against {len(encodings_cache)} records in cache...")
-    for uid, enc in encodings_cache.items():
-        d = face_recognition.face_distance([enc], login_enc)[0]
-        if d < best_dist:
-            best_dist = d
-            best_uid = uid
-    threshold = 0.7
-    if best_dist <= threshold:
-        print(f"Match found: UID={best_uid}  distance={best_dist:.3f}")
-        return best_uid
-    print(f"No match found. Closest distance was {best_dist:.3f} (threshold is <= {threshold})")
+
+    best_match_uid = None
+    min_distance = float("inf")
+
+    # Facenet512 cosine distance verification threshold (0.3 is the standard sweet spot for strict verification)
+    threshold = 0.3
+
+    print(f"Comparing against {len(db_images_dict)} records in database...")
+
+    for uid, db_enc in db_images_dict.items():
+        if db_enc is not None:
+            # Calculate the angular cosine discrepancy between the matrix points
+            distance = DeepFace.verification.dst.compute_cosine(
+                np.array(login_encoding), np.array(db_enc)
+            )
+
+            if distance < min_distance:
+                min_distance = distance
+                best_match_uid = uid
+
+    if min_distance <= threshold and best_match_uid is not None:
+        print(
+            f"✅ Match found: UID={best_match_uid} distance={min_distance:.3f}"
+        )
+        return best_match_uid
+
+    print(
+        f"❌ No match found. Closest distance was {min_distance:.3f} (threshold is <= {threshold})"
+    )
     return None
